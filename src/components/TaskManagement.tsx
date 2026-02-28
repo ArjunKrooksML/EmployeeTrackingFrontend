@@ -37,7 +37,7 @@ export default function TaskManagement() {
         error instanceof Error ? error.message : 'Failed to load tasks from the backend.'
       );
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -188,13 +188,13 @@ export default function TaskManagement() {
             <Download size={20} />
             Export CSV
           </button>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center gap-2"
-        >
-          <ListTodo size={20} />
-          New Task
-        </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center gap-2"
+          >
+            <ListTodo size={20} />
+            New Task
+          </button>
         </div>
       </div>
 
@@ -253,7 +253,7 @@ export default function TaskManagement() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

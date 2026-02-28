@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Lock } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar } from 'lucide-react';
 import EmployeeManagement from './components/EmployeeManagement';
 import ProjectManagement from './components/ProjectManagement';
 import TaskManagement from './components/TaskManagement';
@@ -60,13 +60,13 @@ function App() {
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-500 text-white shadow-lg">
         <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <img
               src="/svaas.png"
               alt="SVAAS logo"
-              className="h-10 w-10 rounded-lg object-cover shadow-lg border border-white/40"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40"
             />
-            <h1 className="text-2xl font-semibold tracking-tight">SVAAS Inframax Solutions</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax</h1>
           </div>
           <div className="relative">
             <button
@@ -114,13 +114,13 @@ function App() {
         </div>
       </nav>
 
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="w-64 bg-slate-900 text-slate-100 border-r border-slate-800/60 px-4 py-6 space-y-3 shadow-xl">
+      <div className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
+        <aside className="w-full md:w-64 bg-slate-900 text-slate-100 border-r border-slate-800/60 px-4 py-4 md:py-6 flex flex-row md:flex-col gap-2 md:gap-3 md:space-y-3 shadow-xl overflow-x-auto flex-shrink-0">
           <button
             onClick={() => setTab('employees')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'employees'
-                ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-                : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
+            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'employees'
+              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
+              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
               }`}
           >
             <Users size={18} />
@@ -128,9 +128,9 @@ function App() {
           </button>
           <button
             onClick={() => setTab('projects')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'projects'
-                ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-                : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
+            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'projects'
+              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
+              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
               }`}
           >
             <FolderKanban size={18} />
@@ -138,9 +138,9 @@ function App() {
           </button>
           <button
             onClick={() => setTab('tasks')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'tasks'
-                ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-                : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
+            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'tasks'
+              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
+              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
               }`}
           >
             <ListChecks size={18} />
@@ -148,9 +148,9 @@ function App() {
           </button>
           <button
             onClick={() => setTab('attendance')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'attendance'
-                ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-                : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
+            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'attendance'
+              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
+              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
               }`}
           >
             <Calendar size={18} />
@@ -158,8 +158,8 @@ function App() {
           </button>
         </aside>
 
-        <main className="flex-1 px-4 sm:px-10 py-8">
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-100/80 p-4 sm:p-6">
+        <main className="flex-1 w-full overflow-hidden px-2 sm:px-10 py-6 sm:py-8">
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-100/80 p-3 sm:p-6 overflow-x-auto">
             {tab === 'employees' && <EmployeeManagement />}
             {tab === 'projects' && <ProjectManagement />}
             {tab === 'tasks' && <TaskManagement />}

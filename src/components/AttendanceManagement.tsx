@@ -33,24 +33,24 @@ export default function AttendanceManagement() {
     const columns: CsvColumn<Attendance & { employee_name?: string }>[] = [
       { key: 'id', header: 'ID' },
       { key: 'employee_id', header: 'Employee ID' },
-      { 
-        key: 'employee_name' as any, 
+      {
+        key: 'employee_name' as any,
         header: 'Employee Name',
         formatter: (_, row: any) => row.employee_name || ''
       },
-      { 
-        key: 'date', 
+      {
+        key: 'date',
         header: 'Date',
         formatter: (val) => typeof val === 'string' ? val.split('T')[0] : String(val)
       },
-      { 
-        key: 'checkin', 
+      {
+        key: 'checkin',
         header: 'Check In',
         formatter: (val) => val ? String(val).slice(0, 5) : '-'
       },
       { key: 'attendance', header: 'Status' },
-      { 
-        key: 'created_at', 
+      {
+        key: 'created_at',
         header: 'Created At',
         formatter: (val) => val ? String(val) : ''
       },
@@ -107,7 +107,7 @@ export default function AttendanceManagement() {
           <p className="text-gray-500">No attendance records found.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

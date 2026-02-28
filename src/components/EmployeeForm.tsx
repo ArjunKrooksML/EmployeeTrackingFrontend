@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, type Employee } from '../lib/api';
-import { X } from 'lucide-react';
+import { X, CheckCircle, Copy } from 'lucide-react';
 
 interface EmployeeFormProps {
   employee: Employee | null;
@@ -23,12 +23,13 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     salary: '',
   });
   const [loading, setLoading] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState('');
 
   useEffect(() => {
     if (employee) {
       const idType = employee.id_type || 'Aadhaar';
-      const normalizedType = idType.toLowerCase() === 'aadhar' ? 'Aadhaar' : 
-                             idType.charAt(0).toUpperCase() + idType.slice(1).toLowerCase();
+      const normalizedType = idType.toLowerCase() === 'aadhar' ? 'Aadhaar' :
+        idType.charAt(0).toUpperCase() + idType.slice(1).toLowerCase();
       setFormData({
         employee_name: employee.employee_name || '',
         email: employee.email || '',
@@ -60,20 +61,25 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
       year_joined: formData.year_joined || null,
     };
     delete payload.id_type_other;
-    if (employee && !formData.password) {
+    if (!formData.password) {
       delete payload.password;
     }
 
     try {
       if (employee && employee.employee_id) {
         await api.employees.update(employee.employee_id, payload);
+        onClose();
       } else {
-        await api.employees.create(payload);
+        const res = await api.employees.create(payload);
+        if (res.password) {
+          setGeneratedPassword(res.password);
+        } else {
+          onClose();
+        }
       }
-      onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving employee:', error);
-      alert('Failed to save employee');
+      alert(error.message || 'Failed to save employee');
     }
 
     setLoading(false);
@@ -89,7 +95,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === 'id_number') {
       const digitsOnly = value.replace(/\D/g, '');
       const maxLength = getMaxLengthForIdType(formData.id_type);
@@ -105,12 +111,47 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
         id_number: '',
       });
     } else {
-    setFormData({
-      ...formData,
+      setFormData({
+        ...formData,
         [name]: value,
-    });
+      });
     }
   };
+
+  if (generatedPassword) {
+    return (
+      <div className="bg-white rounded-lg shadow p-8 text-center border max-w-md mx-auto my-12 relative animate-in zoom-in duration-300">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Employee Added!</h3>
+        <p className="text-gray-600 mb-6">
+          The employee has been created successfully. Their temporary password is:
+        </p>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 flex items-center justify-between">
+          <span className="font-mono text-xl text-blue-900 tracking-wider font-bold mx-auto">{generatedPassword}</span>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(generatedPassword);
+            }}
+            className="text-gray-400 hover:text-blue-600 transition flex-shrink-0 ml-2"
+            title="Copy password"
+          >
+            <Copy size={20} />
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition"
+        >
+          Done
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -157,23 +198,24 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password <span className="text-red-500">*</span>
-            {employee && <span className="text-gray-500 text-xs ml-2">(Leave blank to keep current password)</span>}
-          </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required={!employee}
-            minLength={6}
-            maxLength={100}
-            placeholder={employee ? "Enter new password or leave blank" : "Enter password"}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        {employee && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New Password
+              <span className="text-gray-500 text-xs ml-2">(Leave blank to keep current password)</span>
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              minLength={6}
+              maxLength={100}
+              placeholder="Enter new password or leave blank"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -285,7 +327,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
               placeholder="YYYY"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-        </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

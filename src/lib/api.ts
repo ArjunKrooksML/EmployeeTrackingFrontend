@@ -192,8 +192,8 @@ export const api = {
     getById: async (id: number): Promise<Employee> => {
       return apiRequest<Employee>(`/admin/employees/${id}`);
     },
-    create: async (employee: Omit<Employee, 'employee_id' | 'created_at' | 'updated_at'> & { password: string }): Promise<Employee> => {
-      return apiRequest<Employee>('/admin/employees/create', {
+    create: async (employee: Omit<Employee, 'employee_id' | 'created_at' | 'updated_at'> & { password?: string }): Promise<Employee & { password?: string }> => {
+      return apiRequest<Employee & { password?: string }>('/admin/employees/create', {
         method: 'POST',
         body: JSON.stringify(employee),
       });

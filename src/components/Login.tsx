@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { api, type AdminUser } from '../lib/api';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
@@ -13,6 +13,7 @@ function Login({ onLogin }: Props) {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -73,13 +74,21 @@ function Login({ onLogin }: Props) {
             <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
               <Lock className="text-gray-400" size={18} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={pass}
                 onChange={e => setPass(e.target.value)}
                 required
                 className="w-full outline-none text-sm text-gray-900 placeholder:text-gray-400"
                 placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600 focus:outline-none flex-shrink-0"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

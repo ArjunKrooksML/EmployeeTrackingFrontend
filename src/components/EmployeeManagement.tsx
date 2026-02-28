@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api, type Employee } from '../lib/api';
-import { UserPlus, Calendar, Upload, Download } from 'lucide-react';
+import { UserPlus, Calendar, Download } from 'lucide-react';
 import EmployeeForm from './EmployeeForm';
 import AttendanceView from './AttendanceView';
-import EmployeeImport from './EmployeeImport';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [showImport, setShowImport] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingAttendance, setViewingAttendance] = useState<Employee | null>(null);
 
@@ -28,9 +26,9 @@ export default function EmployeeManagement() {
       // Don't show alert on initial load, just log it
       if (employees.length > 0) {
         alert('Failed to fetch employees');
-    }
+      }
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -57,15 +55,7 @@ export default function EmployeeManagement() {
     fetchEmployees();
   };
 
-  const handleImport = async (employeesData: any[]) => {
-    try {
-      await api.employees.import(employeesData);
-      fetchEmployees();
-    } catch (error) {
-      console.error('Error importing employees:', error);
-      throw error;
-    }
-  };
+
 
   const handleViewAttendance = (employee: Employee) => {
     setViewingAttendance(employee);
@@ -128,14 +118,7 @@ export default function EmployeeManagement() {
     );
   }
 
-  if (showImport) {
-    return (
-      <EmployeeImport
-        onClose={() => setShowImport(false)}
-        onImport={handleImport}
-      />
-    );
-  }
+
 
   return (
     <div>
@@ -149,20 +132,14 @@ export default function EmployeeManagement() {
             <Download size={20} />
             Export CSV
           </button>
+
           <button
-            onClick={() => setShowImport(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
           >
-            <Upload size={20} />
-            Import Employees
+            <UserPlus size={20} />
+            Add Employee
           </button>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-        >
-          <UserPlus size={20} />
-          Add Employee
-        </button>
         </div>
       </div>
 

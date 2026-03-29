@@ -12,6 +12,8 @@ export interface Employee {
   designation_id?: number | null;
   year_joined?: string | null;
   salary: number;
+  role?: string;
+  generated_password?: string;
   created_at?: string;
   updated_at?: string;
 }

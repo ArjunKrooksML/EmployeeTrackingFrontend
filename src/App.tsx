@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Menu } from 'lucide-react';
 import EmployeeManagement from './components/EmployeeManagement';
 import ProjectManagement from './components/ProjectManagement';
 import TaskManagement from './components/TaskManagement';
@@ -18,16 +18,23 @@ function App() {
     if (!raw) return null;
     try {
       const parsed = JSON.parse(raw) as Partial<UserT>;
-      if (!parsed || !parsed.email) return null;
-      const safeUser: UserT = {
-        id: parsed.id ?? 0,
+      if (!parsed || !parsed.email || !parsed.id) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        return null;
+      }
+      return {
+        id: parsed.id,
         email: parsed.email,
         name: parsed.name ?? parsed.email.split('@')[0] ?? 'Admin',
         created_at: parsed.created_at ?? new Date().toISOString(),
         updated_at: parsed.updated_at ?? new Date().toISOString(),
       };
-      return safeUser;
     } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       return null;
     }
   });
@@ -35,6 +42,7 @@ function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showChangePass, setShowChangePass] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const onSignOut = () => {
     setUser(null);
@@ -61,11 +69,11 @@ function App() {
       <nav className="bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-500 text-white shadow-lg">
         <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
           <div className="flex items-center gap-2 sm:gap-3">
-            <img
-              src="/svaas.png"
-              alt="SVAAS logo"
-              className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40"
-            />
+            {/* Hamburger — mobile only */}
+            <button type="button" className="md:hidden p-1 rounded-lg hover:bg-white/20" onClick={() => setDrawerOpen(v => !v)}>
+              <Menu size={22} />
+            </button>
+            <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
             <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax</h1>
           </div>
           <div className="relative">
@@ -114,48 +122,38 @@ function App() {
         </div>
       </nav>
 
-      <div className="flex flex-col md:flex-row min-h-[calc(100vh-4rem)]">
-        <aside className="w-full md:w-64 bg-slate-900 text-slate-100 border-r border-slate-800/60 px-4 py-4 md:py-6 flex flex-row md:flex-col gap-2 md:gap-3 md:space-y-3 shadow-xl overflow-x-auto flex-shrink-0">
-          <button
-            onClick={() => setTab('employees')}
-            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'employees'
-              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
-              }`}
-          >
-            <Users size={18} />
-            <span>Employees</span>
-          </button>
-          <button
-            onClick={() => setTab('projects')}
-            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'projects'
-              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
-              }`}
-          >
-            <FolderKanban size={18} />
-            <span>Projects</span>
-          </button>
-          <button
-            onClick={() => setTab('tasks')}
-            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'tasks'
-              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
-              }`}
-          >
-            <ListChecks size={18} />
-            <span>Tasks</span>
-          </button>
-          <button
-            onClick={() => setTab('attendance')}
-            className={`flex-shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === 'attendance'
-              ? 'bg-white/15 text-white shadow-lg shadow-slate-900/30'
-              : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
-              }`}
-          >
-            <Calendar size={18} />
-            <span>Attendance</span>
-          </button>
+      <div className="flex min-h-[calc(100vh-4rem)] relative">
+        {/* Backdrop for mobile drawer */}
+        {drawerOpen && (
+          <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setDrawerOpen(false)} />
+        )}
+
+        {/* Sidebar — always on desktop, drawer on mobile */}
+        <aside className={`
+          fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-100 px-4 py-6 space-y-3 shadow-xl
+          transform transition-transform duration-300
+          md:relative md:translate-x-0 md:flex md:flex-col
+          ${drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          <div className="flex items-center justify-between md:hidden mb-2">
+            <span className="font-semibold text-white">Menu</span>
+            <button onClick={() => setDrawerOpen(false)}><X size={20} /></button>
+          </div>
+          {[
+            { key: 'employees', icon: <Users size={18} />, label: 'Employees' },
+            { key: 'projects', icon: <FolderKanban size={18} />, label: 'Projects' },
+            { key: 'tasks', icon: <ListChecks size={18} />, label: 'Tasks' },
+            { key: 'attendance', icon: <Calendar size={18} />, label: 'Attendance' },
+          ].map(item => (
+            <button key={item.key}
+              onClick={() => { setTab(item.key as Tab); setDrawerOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${
+                tab === item.key ? 'bg-white/15 text-white shadow-lg' : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
+              }`}>
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
         </aside>
 
         <main className="flex-1 w-full overflow-hidden px-2 sm:px-10 py-6 sm:py-8">

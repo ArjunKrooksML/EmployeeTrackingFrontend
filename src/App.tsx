@@ -65,8 +65,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-500 text-white shadow-lg">
+    <div className="min-h-screen bg-[#f4f5fa]">
+      <nav className="bg-gradient-to-r from-blue-950 via-blue-800 to-indigo-700 text-white shadow-lg">
         <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Hamburger — mobile only */}
@@ -130,7 +130,7 @@ function App() {
 
         {/* Sidebar — always on desktop, drawer on mobile */}
         <aside className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-100 px-4 py-6 space-y-3 shadow-xl
+          fixed inset-y-0 left-0 z-40 w-64 bg-slate-950 text-slate-100 px-4 py-6 space-y-3 shadow-xl
           transform transition-transform duration-300
           md:relative md:translate-x-0 md:flex md:flex-col
           ${drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -148,7 +148,9 @@ function App() {
             <button key={item.key}
               onClick={() => { setTab(item.key as Tab); setDrawerOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${
-                tab === item.key ? 'bg-white/15 text-white shadow-lg' : 'text-slate-200/80 hover:bg-white/10 hover:text-white'
+                tab === item.key
+                  ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
+                  : 'text-slate-300/80 hover:bg-white/10 hover:text-white'
               }`}>
               {item.icon}
               <span>{item.label}</span>
@@ -157,7 +159,7 @@ function App() {
         </aside>
 
         <main className="flex-1 w-full overflow-hidden px-2 sm:px-10 py-6 sm:py-8">
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-100/80 p-3 sm:p-6 overflow-x-auto">
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border-t-4 border-amber-400 border border-slate-100/80 p-3 sm:p-6 overflow-x-auto">
             {tab === 'employees' && <EmployeeManagement />}
             {tab === 'projects' && <ProjectManagement />}
             {tab === 'tasks' && <TaskManagement />}

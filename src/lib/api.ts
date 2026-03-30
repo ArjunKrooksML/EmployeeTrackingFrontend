@@ -57,8 +57,10 @@ export interface Attendance {
   id: number;
   employee_id: number;
   date: string;
-  attendance: 'present' | 'absent' | 'late';
+  attendance: 'pending' | 'present' | 'absent' | 'late';
   checkin?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   created_at: string;
 }
 

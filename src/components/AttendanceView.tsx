@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, type Employee, type Attendance } from '../lib/api';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 
 interface AttendanceViewProps {
   employee: Employee;
@@ -10,6 +10,7 @@ interface AttendanceViewProps {
 export default function AttendanceView({ employee, onClose }: AttendanceViewProps) {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAttendance();
@@ -31,6 +32,7 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
   };
 
   const handleStatusChange = async (attendanceId: number, newStatus: string) => {
+    setUpdating(attendanceId);
     try {
       await api.attendance.update(attendanceId, newStatus);
       // Optimistic update or refetch
@@ -38,6 +40,8 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
     } catch (err) {
       console.error(err);
       alert('Failed to update status');
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -55,17 +59,13 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'present':
-        return 'bg-green-100 text-green-800';
-      case 'absent':
-        return 'bg-red-100 text-red-800';
-      case 'late':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const statusBadge = (status: string) => {
+    const cls = status === 'present' ? 'bg-green-100 text-green-800'
+      : status === 'absent' ? 'bg-red-100 text-red-800'
+      : status === 'late' ? 'bg-yellow-100 text-yellow-800'
+      : 'bg-orange-100 text-orange-800'; // pending
+    const label = status === 'pending' ? 'Under Review' : status.charAt(0).toUpperCase() + status.slice(1);
+    return <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${cls}`}>{label}</span>;
   };
 
   return (
@@ -109,6 +109,9 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -123,24 +126,51 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
                     {formatTime(record.checkin)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                        record.attendance
-                      )}`}
-                    >
-                      {record.attendance}
-                    </span>
+                    {statusBadge(record.attendance)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {record.checkin && record.attendance !== 'present' ? (
-                      <button
-                        onClick={() => handleStatusChange(record.id, 'present')}
-                        className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium transition"
+                    {record.lat && record.lng ? (
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${record.lat}&mlon=${record.lng}&zoom=16`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
+                        title="View Location"
                       >
-                        Approve
-                      </button>
+                        <MapPin size={16} />
+                        View Map
+                      </a>
                     ) : (
-                      <span className="text-gray-400 text-sm">-</span>
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {record.attendance === 'pending' ? (
+                      <div className="flex gap-2">
+                        <button
+                          disabled={updating === record.id}
+                          onClick={() => handleStatusChange(record.id, 'present')}
+                          className="px-3 py-1 text-xs font-medium bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition"
+                        >
+                          {updating === record.id ? '…' : 'Present'}
+                        </button>
+                        <button
+                          disabled={updating === record.id}
+                          onClick={() => handleStatusChange(record.id, 'late')}
+                          className="px-3 py-1 text-xs font-medium bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50 transition"
+                        >
+                          Late
+                        </button>
+                        <button
+                          disabled={updating === record.id}
+                          onClick={() => handleStatusChange(record.id, 'absent')}
+                          className="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 transition"
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">Resolved</span>
                     )}
                   </td>
                 </tr>

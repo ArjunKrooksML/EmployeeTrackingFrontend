@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api, type Attendance } from '../lib/api';
-import { Download } from 'lucide-react';
+import { Download, MapPin } from 'lucide-react';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
+type AttRow = Attendance & { employee_name?: string };
+
 export default function AttendanceManagement() {
-  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [attendance, setAttendance] = useState<AttRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAttendance();
@@ -15,7 +18,7 @@ export default function AttendanceManagement() {
     setLoading(true);
     try {
       const data = await api.attendance.getAll();
-      setAttendance(data || []);
+      setAttendance((data as AttRow[]) || []);
     } catch (error) {
       console.error('Error fetching attendance:', error);
       alert('Failed to fetch attendance');
@@ -24,65 +27,45 @@ export default function AttendanceManagement() {
     }
   };
 
+  const approve = async (id: number, status: 'present' | 'absent' | 'late') => {
+    setUpdating(id);
+    try {
+      const updated = await api.attendance.update(id, status);
+      setAttendance(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r));
+    } catch (e: any) {
+      alert(e?.message || 'Failed to update attendance');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const handleExport = () => {
     if (attendance.length === 0) {
       alert('No attendance records to export.');
       return;
     }
-
-    const columns: CsvColumn<Attendance & { employee_name?: string }>[] = [
+    const columns: CsvColumn<AttRow>[] = [
       { key: 'id', header: 'ID' },
       { key: 'employee_id', header: 'Employee ID' },
-      {
-        key: 'employee_name' as any,
-        header: 'Employee Name',
-        formatter: (_, row: any) => row.employee_name || ''
-      },
-      {
-        key: 'date',
-        header: 'Date',
-        formatter: (val) => typeof val === 'string' ? val.split('T')[0] : String(val)
-      },
-      {
-        key: 'checkin',
-        header: 'Check In',
-        formatter: (val) => val ? String(val).slice(0, 5) : '-'
-      },
+      { key: 'employee_name' as any, header: 'Employee Name', formatter: (_, r: any) => r.employee_name || '' },
+      { key: 'date', header: 'Date', formatter: (v) => typeof v === 'string' ? v.split('T')[0] : String(v) },
+      { key: 'checkin', header: 'Check In', formatter: (v) => v ? String(v).slice(0, 5) : '-' },
       { key: 'attendance', header: 'Status' },
-      {
-        key: 'created_at',
-        header: 'Created At',
-        formatter: (val) => val ? String(val) : ''
-      },
+      { key: 'created_at', header: 'Created At', formatter: (v) => v ? String(v) : '' },
     ];
-
-    downloadCsv('attendance.csv', attendance as any, columns);
+    downloadCsv('attendance.csv', attendance, columns);
   };
 
-  const formatTime = (timeStr: string | null | undefined) => {
-    if (!timeStr) return '-';
-    return String(timeStr).slice(0, 5);
-  };
+  const formatTime = (t: string | null | undefined) => t ? String(t).slice(0, 5) : '-';
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'present':
-        return 'bg-green-100 text-green-800';
-      case 'absent':
-        return 'bg-red-100 text-red-800';
-      case 'late':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const statusBadge = (status: string) => {
+    const cls = status === 'present' ? 'bg-green-100 text-green-800'
+      : status === 'absent' ? 'bg-red-100 text-red-800'
+      : status === 'late' ? 'bg-yellow-100 text-yellow-800'
+      : 'bg-orange-100 text-orange-800'; // pending
+    const label = status === 'pending' ? 'Under Review' : status.charAt(0).toUpperCase() + status.slice(1);
+    return <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${cls}`}>{label}</span>;
   };
 
   return (
@@ -111,40 +94,67 @@ export default function AttendanceManagement() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Employee ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check In
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {attendance.map((record) => (
                 <tr key={record.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {(record as any).employee_name || record.employee_id}
+                    {record.employee_name || record.employee_id}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(record.date)}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(record.date)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatTime(record.checkin)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{statusBadge(record.attendance)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatTime(record.checkin)}
+                    {record.lat && record.lng ? (
+                      <a
+                        href={`https://www.openstreetmap.org/?mlat=${record.lat}&mlon=${record.lng}&zoom=16`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
+                        title="View Location"
+                      >
+                        <MapPin size={16} />
+                        View Map
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                        record.attendance
-                      )}`}
-                    >
-                      {record.attendance}
-                    </span>
+                    {record.attendance === 'pending' ? (
+                      <div className="flex gap-2">
+                        <button
+                          disabled={updating === record.id}
+                          onClick={() => approve(record.id, 'present')}
+                          className="px-3 py-1 text-xs font-medium bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition"
+                        >
+                          {updating === record.id ? '…' : 'Present'}
+                        </button>
+                        <button
+                          disabled={updating === record.id}
+                          onClick={() => approve(record.id, 'late')}
+                          className="px-3 py-1 text-xs font-medium bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50 transition"
+                        >
+                          Late
+                        </button>
+                        <button
+                          disabled={updating === record.id}
+                          onClick={() => approve(record.id, 'absent')}
+                          className="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 transition"
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">Resolved</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -155,4 +165,3 @@ export default function AttendanceManagement() {
     </div>
   );
 }
-

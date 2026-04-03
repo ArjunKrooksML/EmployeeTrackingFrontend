@@ -81,7 +81,7 @@ function App() {
         <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
           <div className="flex items-center gap-2 sm:gap-3">
             <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
-            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax</h1>
+            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax Solutions</h1>
           </div>
           <div className="relative">
             <button

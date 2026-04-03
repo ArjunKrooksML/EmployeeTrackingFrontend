@@ -75,11 +75,6 @@ export default function EmployeeManagement() {
       { key: 'id_type', header: 'ID Type' },
       { key: 'id_number', header: 'ID Number' },
       {
-        key: 'designation_id',
-        header: 'Designation ID',
-        formatter: (_, row) => (row.designation_id ?? '').toString(),
-      },
-      {
         key: 'year_joined',
         header: 'Year Joined',
         formatter: (_, row) => row.year_joined ?? '',
@@ -163,9 +158,6 @@ export default function EmployeeManagement() {
                   Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Designation ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Year Joined
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -186,9 +178,6 @@ export default function EmployeeManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{employee.phone_no}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{employee.designation_id || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{employee.year_joined || 'N/A'}</div>

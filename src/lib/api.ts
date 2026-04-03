@@ -9,7 +9,6 @@ export interface Employee {
   phone_no: string;
   id_type: string;
   id_number: string;
-  designation_id?: number | null;
   year_joined?: string | null;
   salary: number;
   role?: string;
@@ -61,6 +60,18 @@ export interface Attendance {
   checkin?: string | null;
   lat?: number | null;
   lng?: number | null;
+  created_at: string;
+}
+
+export interface Leave {
+  id: number;
+  employee_id: number;
+  employee_name: string;
+  leave_type: 'casual' | 'sick' | 'emergency';
+  leave_date: string;
+  day_type: 'full' | 'first_half' | 'second_half';
+  status: 'pending' | 'approved' | 'rejected';
+  reason?: string | null;
   created_at: string;
 }
 
@@ -130,8 +141,30 @@ async function apiRequest<T>(
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+      // Pydantic validation errors come as an array of { loc, msg } objects
+      if (Array.isArray(errorData.detail)) {
+        const fieldLabels: Record<string, string> = {
+          employee_name: 'Employee Name',
+          email: 'Email',
+          phone_no: 'Phone Number',
+          dob: 'Date of Birth',
+          address: 'Address',
+          id_type: 'ID Type',
+          id_number: 'ID Number',
+          salary: 'Salary',
+          password: 'Password',
+          year_joined: 'Year Joined',
+          role: 'Role',
+        };
+        const messages = errorData.detail.map((err: { loc: string[]; msg: string }) => {
+          const field = err.loc[err.loc.length - 1];
+          const label = fieldLabels[field] || field;
+          return `${label}: ${err.msg}`;
+        });
+        throw new Error(messages.join('\n'));
+      }
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
 
     const text = await response.text();
@@ -265,6 +298,17 @@ export const api = {
       return apiRequest<Attendance>(`/attendance/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ attendance: status }),
+      });
+    },
+  },
+  leaves: {
+    getAll: async (): Promise<Leave[]> => {
+      return apiRequest<Leave[]>('/leaves/all');
+    },
+    updateStatus: async (id: number, status: 'approved' | 'rejected'): Promise<Leave> => {
+      return apiRequest<Leave>(`/leaves/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
       });
     },
   },

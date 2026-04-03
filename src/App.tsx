@@ -1,18 +1,29 @@
 import { useState } from 'react';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Menu } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home } from 'lucide-react';
 import EmployeeManagement from './components/EmployeeManagement';
 import ProjectManagement from './components/ProjectManagement';
 import TaskManagement from './components/TaskManagement';
 import AttendanceManagement from './components/AttendanceManagement';
+import LeaveManagement from './components/LeaveManagement';
+import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import type { AdminUser } from './lib/api';
 import ChangePasswordModal from './components/ChangePasswordModal';
 
-type Tab = 'employees' | 'projects' | 'tasks' | 'attendance';
+type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves';
 type UserT = AdminUser;
 
+const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
+  { key: 'dashboard', icon: <Home size={20} />, label: 'Dashboard' },
+  { key: 'employees', icon: <Users size={20} />, label: 'Employees' },
+  { key: 'projects', icon: <FolderKanban size={20} />, label: 'Projects' },
+  { key: 'tasks', icon: <ListChecks size={20} />, label: 'Tasks' },
+  { key: 'attendance', icon: <Calendar size={20} />, label: 'Attendance' },
+  { key: 'leaves', icon: <Briefcase size={20} />, label: 'Leaves' },
+];
+
 function App() {
-  const [tab, setTab] = useState<Tab>('employees');
+  const [tab, setTab] = useState<Tab>('dashboard');
   const [user, setUser] = useState<UserT | null>(() => {
     const raw = localStorage.getItem('user');
     if (!raw) return null;
@@ -42,7 +53,6 @@ function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showChangePass, setShowChangePass] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const onSignOut = () => {
     setUser(null);
@@ -66,13 +76,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#f4f5fa]">
+      {/* Top nav */}
       <nav className="bg-gradient-to-r from-blue-950 via-blue-800 to-indigo-700 text-white shadow-lg">
         <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Hamburger — mobile only */}
-            <button type="button" className="md:hidden p-1 rounded-lg hover:bg-white/20" onClick={() => setDrawerOpen(v => !v)}>
-              <Menu size={22} />
-            </button>
             <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
             <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax</h1>
           </div>
@@ -97,7 +104,7 @@ function App() {
                     setShowProfile(true);
                   }}
                 >
-                  View profile
+                  View Profile
                 </button>
                 <button
                   type="button"
@@ -107,7 +114,7 @@ function App() {
                     setShowChangePass(true);
                   }}
                 >
-                  Change password
+                  Change Password
                 </button>
                 <button
                   type="button"
@@ -123,50 +130,54 @@ function App() {
       </nav>
 
       <div className="flex min-h-[calc(100vh-4rem)] relative">
-        {/* Backdrop for mobile drawer */}
-        {drawerOpen && (
-          <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setDrawerOpen(false)} />
-        )}
-
-        {/* Sidebar — always on desktop, drawer on mobile */}
-        <aside className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-slate-950 text-slate-100 px-4 py-6 space-y-3 shadow-xl
-          transform transition-transform duration-300
-          md:relative md:translate-x-0 md:flex md:flex-col
-          ${drawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}>
-          <div className="flex items-center justify-between md:hidden mb-2">
-            <span className="font-semibold text-white">Menu</span>
-            <button onClick={() => setDrawerOpen(false)}><X size={20} /></button>
-          </div>
-          {[
-            { key: 'employees', icon: <Users size={18} />, label: 'Employees' },
-            { key: 'projects', icon: <FolderKanban size={18} />, label: 'Projects' },
-            { key: 'tasks', icon: <ListChecks size={18} />, label: 'Tasks' },
-            { key: 'attendance', icon: <Calendar size={18} />, label: 'Attendance' },
-          ].map(item => (
-            <button key={item.key}
-              onClick={() => { setTab(item.key as Tab); setDrawerOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${
-                tab === item.key
-                  ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
-                  : 'text-slate-300/80 hover:bg-white/10 hover:text-white'
-              }`}>
+        {/* Sidebar — desktop only */}
+        <aside className="hidden md:flex w-64 bg-slate-950 text-slate-100 flex-col px-4 py-6 space-y-3 shadow-xl">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === item.key
+                ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
+                : 'text-slate-300/80 hover:bg-white/10 hover:text-white'
+                }`}
+            >
               {item.icon}
               <span>{item.label}</span>
             </button>
           ))}
         </aside>
 
+        {/* Main content */}
         <main className="flex-1 w-full overflow-hidden px-2 sm:px-10 py-6 sm:py-8">
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border-t-4 border-amber-400 border border-slate-100/80 p-3 sm:p-6 overflow-x-auto">
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border-t-4 border-amber-400 border border-slate-100/80 p-3 sm:p-6 overflow-x-auto pb-24 md:pb-6">
+            {tab === 'dashboard' && <AdminDashboard />}
             {tab === 'employees' && <EmployeeManagement />}
             {tab === 'projects' && <ProjectManagement />}
             {tab === 'tasks' && <TaskManagement />}
             {tab === 'attendance' && <AttendanceManagement />}
+            {tab === 'leaves' && <LeaveManagement />}
           </div>
         </main>
       </div>
+
+      {/* Bottom nav — mobile only */}
+      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex md:hidden z-30">
+        {NAV_ITEMS.map(item => {
+          const active = tab === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition relative ${active ? 'text-amber-600' : 'text-slate-400'
+                }`}
+            >
+              {active && <span className="absolute top-0 inset-x-3 h-0.5 rounded-b-full bg-amber-500" />}
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {showProfile && user && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">
@@ -178,7 +189,7 @@ function App() {
               <X size={20} />
             </button>
             <div className="text-center space-y-4">
-              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white flex items-center justify-center text-2xl font-semibold shadow-lg">
+              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-blue-800 to-amber-400 text-white flex items-center justify-center text-2xl font-semibold shadow-lg">
                 {(user.name || user.email).charAt(0).toUpperCase()}
               </div>
               <div>

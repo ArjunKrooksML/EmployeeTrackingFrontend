@@ -18,13 +18,13 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     id_type: 'Aadhaar',
     id_type_other: '',
     id_number: '',
-    designation_id: '',
     year_joined: '',
     salary: '',
     role: 'employee',
   });
   const [loading, setLoading] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (employee) {
@@ -41,7 +41,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
         id_type: ['Aadhaar', 'PAN', 'Passport'].includes(normalizedType) ? normalizedType : 'Aadhaar',
         id_type_other: '',
         id_number: employee.id_number || '',
-        designation_id: employee.designation_id?.toString() || '',
         year_joined: employee.year_joined || '',
         salary: employee.salary?.toString() || '',
         role: (employee as any).role || 'employee',
@@ -51,6 +50,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     setLoading(true);
 
     const finalIdType = formData.id_type;
@@ -58,7 +58,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     const payload: any = {
       ...formData,
       id_type: finalIdType,
-      designation_id: formData.designation_id ? parseInt(formData.designation_id) : null,
       salary: parseInt(formData.salary) || 0,
       year_joined: formData.year_joined || null,
     };
@@ -81,7 +80,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
       }
     } catch (error: any) {
       console.error('Error saving employee:', error);
-      alert(error.message || 'Failed to save employee');
+      setFormError(error.message || 'Failed to save employee');
     }
 
     setLoading(false);
@@ -98,7 +97,11 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
-    if (name === 'id_number') {
+    if (name === 'phone_no') {
+      // digits only, max 15
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 15);
+      setFormData({ ...formData, phone_no: digitsOnly });
+    } else if (name === 'id_number') {
       const digitsOnly = value.replace(/\D/g, '');
       const maxLength = getMaxLengthForIdType(formData.id_type);
       const limitedValue = digitsOnly.slice(0, maxLength);
@@ -170,6 +173,11 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {formError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700 whitespace-pre-line">
+            {formError}
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Employee Name <span className="text-red-500">*</span>
@@ -302,20 +310,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Designation ID
-            </label>
-            <input
-              type="number"
-              name="designation_id"
-              value={formData.designation_id}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Year Joined

@@ -39,8 +39,12 @@ function Login({ onLogin }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 space-y-6">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/background.png')" }}
+    >
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-0"></div>
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-md shadow-2xl overflow-hidden rounded-2xl p-8 space-y-6 relative z-10 border border-white/20">
         <div className="text-center space-y-3">
           <img
             src="/svaas.png"

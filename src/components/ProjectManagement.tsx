@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FolderPlus, Download } from 'lucide-react';
 import ProjectForm from './ProjectForm';
 import { api, type Project } from '../lib/api';
+import Pagination from './Pagination';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
 export default function ProjectManagement() {
@@ -10,26 +11,33 @@ export default function ProjectManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [page, pageSize]);
 
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const data = await api.projects.getAll();
-      setProjects(data);
+      const data = await api.projects.getAll(page, pageSize);
+      setProjects(data.items);
+      setTotal(data.total);
+      setPages(data.pages);
       setErrorMessage(null);
     } catch (error) {
       console.error('Error fetching projects:', error);
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to load projects from the backend.'
-      );
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to load projects from the backend.');
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
+
+  const handlePageChange = (p: number) => setPage(p);
+  const handlePageSizeChange = (s: number) => { setPageSize(s); setPage(1); };
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
@@ -42,35 +50,28 @@ export default function ProjectManagement() {
     fetchProjects();
   };
 
-  const handleExport = () => {
-    if (projects.length === 0) {
-      alert('No projects to export yet.');
-      return;
+  const handleExport = async () => {
+    try {
+      const data = await api.projects.getAll(1, 10000);
+      const all = data.items;
+      if (all.length === 0) { alert('No projects to export yet.'); return; }
+      const columns: CsvColumn<Project>[] = [
+        { key: 'project_id', header: 'Project ID' },
+        { key: 'name', header: 'Project Name' },
+        { key: 'client_name', header: 'Client Name' },
+        { key: 'address', header: 'Address' },
+        { key: 'start_date', header: 'Start Date' },
+        { key: 'completion_date', header: 'Completion Date', formatter: (_, row) => row.completion_date ?? '' },
+      ];
+      downloadCsv('projects.csv', all, columns);
+    } catch {
+      alert('Failed to export projects');
     }
-
-    const columns: CsvColumn<Project>[] = [
-      { key: 'project_id', header: 'Project ID' },
-      { key: 'name', header: 'Project Name' },
-      { key: 'client_name', header: 'Client Name' },
-      { key: 'address', header: 'Address' },
-      { key: 'start_date', header: 'Start Date' },
-      {
-        key: 'completion_date',
-        header: 'Completion Date',
-        formatter: (_, row) => row.completion_date ?? '',
-      },
-    ];
-
-    downloadCsv('projects.csv', projects, columns);
   };
 
   const formatDate = (date: string | null) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   if (showForm) {
@@ -89,20 +90,18 @@ export default function ProjectManagement() {
             <Download size={20} />
             Export CSV
           </button>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
-        >
-          <FolderPlus size={20} />
-          New Project
-        </button>
-      </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+          >
+            <FolderPlus size={20} />
+            New Project
+          </button>
+        </div>
       </div>
 
       {errorMessage && (
-        <div className="mb-4 p-4 rounded border border-red-200 bg-red-50 text-red-700 text-sm">
-          {errorMessage}
-        </div>
+        <div className="mb-4 p-4 rounded border border-red-200 bg-red-50 text-red-700 text-sm">{errorMessage}</div>
       )}
 
       {loading ? (
@@ -114,47 +113,57 @@ export default function ProjectManagement() {
           <p className="text-gray-500">No projects found. Create your first project to get started.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div
-              key={project.project_id}
-              className="bg-white rounded-lg shadow hover:shadow-lg transition p-6"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{project.client_name}</p>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
+            {projects.map((project) => (
+              <div key={project.project_id} className="bg-white rounded-lg shadow hover:shadow-lg transition p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{project.client_name}</p>
+                  </div>
+                  <span className="text-xs text-gray-500">#{project.project_id}</span>
                 </div>
-                <span className="text-xs text-gray-500">#{project.project_id}</span>
-              </div>
 
-              <p className="text-sm text-gray-600 mb-4 line-clamp-3">{project.address}</p>
+                <p className="text-sm text-gray-600 mb-4 line-clamp-3">{project.address}</p>
 
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Start Date:</span>
-                  <span className="text-gray-900">{formatDate(project.start_date)}</span>
+                <div className="space-y-2 text-sm mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Start Date:</span>
+                    <span className="text-gray-900">{formatDate(project.start_date)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Completion:</span>
+                    <span className="text-gray-900">{formatDate(project.completion_date ?? null)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Completion:</span>
-                  <span className="text-gray-900">{formatDate(project.completion_date)}</span>
+
+                <div className="flex gap-2 pt-4 border-t">
+                  <button
+                    onClick={() => handleEdit(project)}
+                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+                  >
+                    Edit
+                  </button>
+                  <span className="flex-1 px-3 py-2 text-center text-gray-400 border border-dashed border-gray-200 rounded text-xs">
+                    Delete unavailable
+                  </span>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <button
-                  onClick={() => handleEdit(project)}
-                  className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
-                >
-                  Edit
-                </button>
-                <span className="flex-1 px-3 py-2 text-center text-gray-400 border border-dashed border-gray-200 rounded text-xs">
-                  Delete unavailable
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+          <div className="bg-white rounded-lg shadow">
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
+        </>
       )}
     </div>
   );

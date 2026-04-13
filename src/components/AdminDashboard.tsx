@@ -24,11 +24,11 @@ export default function AdminDashboard() {
           api.projects?.getAll?.() || Promise.resolve([])
         ]);
         
-        setEmployees(results[0].status === 'fulfilled' ? (results[0].value || []) : []);
-        setTasks(results[1].status === 'fulfilled' ? (results[1].value || []) : []);
-        setAttendance(results[2].status === 'fulfilled' ? (results[2].value || []) : []);
-        setLeaves(results[3].status === 'fulfilled' ? (results[3].value || []) : []);
-        setProjects(results[4].status === 'fulfilled' ? (results[4].value || []) : []);
+        setEmployees(results[0].status === 'fulfilled' ? (results[0].value?.items || []) : []);
+        setTasks(results[1].status === 'fulfilled' ? (results[1].value?.items || []) : []);
+        setAttendance(results[2].status === 'fulfilled' ? (results[2].value?.items || []) : []);
+        setLeaves(results[3].status === 'fulfilled' ? (results[3].value?.items || []) : []);
+        setProjects(results[4].status === 'fulfilled' ? (results[4].value?.items || []) : []);
       } catch (err) {
         console.error('Failed to fetch admin dashboard stats:', err);
       } finally {

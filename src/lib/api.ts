@@ -1,5 +1,13 @@
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+
 export interface Employee {
   employee_id?: number;
   employee_name: string;
@@ -31,7 +39,7 @@ export interface Task {
   project_id: number;
   task_name: string;
   description?: string | null;
-  assigned_to?: string | null;
+  assigned_to?: number | null;
   start_date?: string | null;
   deadline?: string | null;
   iscompleted?: boolean;
@@ -209,6 +217,12 @@ export const api = {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
     },
+    sendOtp: async (email: string): Promise<void> => {
+      return apiRequest<void>('/admin/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      }, false);
+    },
     resetPassword: async (email: string, otp: string, new_password: string): Promise<void> => {
       return apiRequest<void>('/admin/auth/reset-password', {
         method: 'POST',
@@ -223,8 +237,8 @@ export const api = {
     },
   },
   employees: {
-    getAll: async (): Promise<Employee[]> => {
-      return apiRequest<Employee[]>('/admin/employees');
+    getAll: async (page = 1, pageSize = 20): Promise<PaginatedResponse<Employee>> => {
+      return apiRequest<PaginatedResponse<Employee>>(`/admin/employees?page=${page}&page_size=${pageSize}`);
     },
     getById: async (id: number): Promise<Employee> => {
       return apiRequest<Employee>(`/admin/employees/${id}`);
@@ -254,8 +268,8 @@ export const api = {
     },
   },
   projects: {
-    getAll: async (): Promise<Project[]> => {
-      return apiRequest<Project[]>('/admin/projects');
+    getAll: async (page = 1, pageSize = 20): Promise<PaginatedResponse<Project>> => {
+      return apiRequest<PaginatedResponse<Project>>(`/admin/projects?page=${page}&page_size=${pageSize}`);
     },
     create: async (project: ProjectPayload): Promise<Project> => {
       return apiRequest<Project>('/admin/projects/create', {
@@ -271,8 +285,11 @@ export const api = {
     },
   },
   tasks: {
-    getAll: async (): Promise<Task[]> => {
-      return apiRequest<Task[]>('/admin/tasks');
+    getAll: async (page = 1, pageSize = 20, status?: string, priority?: string): Promise<PaginatedResponse<Task>> => {
+      const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+      if (status) params.set('status', status);
+      if (priority) params.set('priority', priority);
+      return apiRequest<PaginatedResponse<Task>>(`/admin/tasks?${params}`);
     },
     create: async (task: TaskPayload): Promise<Task> => {
       return apiRequest<Task>('/admin/tasks/create', {
@@ -291,8 +308,8 @@ export const api = {
     getEmployeeAttendance: async (employeeId: number): Promise<Attendance[]> => {
       return apiRequest<Attendance[]>(`/attendance/employee/${employeeId}`);
     },
-    getAll: async (): Promise<Attendance[]> => {
-      return apiRequest<Attendance[]>(`/attendance/all`);
+    getAll: async (page = 1, pageSize = 20): Promise<PaginatedResponse<Attendance>> => {
+      return apiRequest<PaginatedResponse<Attendance>>(`/attendance/all?page=${page}&page_size=${pageSize}`);
     },
     update: async (id: number, status: string): Promise<Attendance> => {
       return apiRequest<Attendance>(`/attendance/${id}`, {
@@ -302,8 +319,10 @@ export const api = {
     },
   },
   leaves: {
-    getAll: async (): Promise<Leave[]> => {
-      return apiRequest<Leave[]>('/leaves/all');
+    getAll: async (page = 1, pageSize = 20, status?: string): Promise<PaginatedResponse<Leave>> => {
+      const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+      if (status) params.set('status', status);
+      return apiRequest<PaginatedResponse<Leave>>(`/leaves/all?${params}`);
     },
     updateStatus: async (id: number, status: 'approved' | 'rejected'): Promise<Leave> => {
       return apiRequest<Leave>(`/leaves/${id}/status`, {

@@ -28,7 +28,7 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
         task_name: task.task_name,
         description: task.description || '',
         project_id: task.project_id?.toString() || '',
-        assigned_to: task.assigned_to || '',
+        assigned_to: task.assigned_to?.toString() || '',
         status: task.status,
         priority: task.priority,
         start_date: task.start_date || '',
@@ -53,7 +53,7 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
       task_name: formData.task_name.trim(),
       description: formData.description.trim() || null,
       project_id: projectIdNumber,
-      assigned_to: formData.assigned_to || null,
+      assigned_to: formData.assigned_to ? Number(formData.assigned_to) : null,
       status: formData.status,
       priority: formData.priority,
       start_date: formData.start_date || null,
@@ -158,8 +158,8 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
               <option value="">Unassigned</option>
               {employees.map((employee) => (
                 <option
-                  key={employee.employee_id ?? employee.employee_name}
-                  value={employee.employee_name}
+                  key={employee.employee_id}
+                  value={employee.employee_id?.toString() ?? ''}
                 >
                   {employee.employee_name}
                 </option>

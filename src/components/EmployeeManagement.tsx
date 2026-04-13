@@ -3,6 +3,7 @@ import { api, type Employee } from '../lib/api';
 import { UserPlus, Calendar, Download } from 'lucide-react';
 import EmployeeForm from './EmployeeForm';
 import AttendanceView from './AttendanceView';
+import Pagination from './Pagination';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
 export default function EmployeeManagement() {
@@ -11,30 +12,34 @@ export default function EmployeeManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [viewingAttendance, setViewingAttendance] = useState<Employee | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [page, pageSize]);
 
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const data = await api.employees.getAll();
-      setEmployees(data || []);
+      const data = await api.employees.getAll(page, pageSize);
+      setEmployees(data.items || []);
+      setTotal(data.total);
+      setPages(data.pages);
     } catch (error) {
       console.error('Error fetching employees:', error);
-      // Don't show alert on initial load, just log it
-      if (employees.length > 0) {
-        alert('Failed to fetch employees');
-      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePageChange = (p: number) => setPage(p);
+  const handlePageSizeChange = (s: number) => { setPageSize(s); setPage(1); };
+
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this employee?')) return;
-
     try {
       await api.employees.delete(id);
       fetchEmployees();
@@ -55,65 +60,40 @@ export default function EmployeeManagement() {
     fetchEmployees();
   };
 
-
-
   const handleViewAttendance = (employee: Employee) => {
     setViewingAttendance(employee);
   };
 
-  const handleExport = () => {
-    if (employees.length === 0) {
-      alert('No employees to export yet.');
-      return;
+  const handleExport = async () => {
+    try {
+      const data = await api.employees.getAll(1, 10000);
+      const all = data.items;
+      if (all.length === 0) { alert('No employees to export yet.'); return; }
+      const columns: CsvColumn<Employee>[] = [
+        { key: 'employee_id', header: 'ID' },
+        { key: 'employee_name', header: 'Name' },
+        { key: 'email', header: 'Email' },
+        { key: 'phone_no', header: 'Phone' },
+        { key: 'id_type', header: 'ID Type' },
+        { key: 'id_number', header: 'ID Number' },
+        { key: 'year_joined', header: 'Year Joined', formatter: (_, row) => row.year_joined ?? '' },
+        { key: 'salary', header: 'Salary', formatter: (_, row) => row.salary?.toString() ?? '' },
+        { key: 'created_at', header: 'Created At', formatter: (_, row) => row.created_at ?? '' },
+        { key: 'updated_at', header: 'Updated At', formatter: (_, row) => row.updated_at ?? '' },
+      ];
+      downloadCsv('employees.csv', all, columns);
+    } catch {
+      alert('Failed to export employees');
     }
-
-    const columns: CsvColumn<Employee>[] = [
-      { key: 'employee_id', header: 'ID' },
-      { key: 'employee_name', header: 'Name' },
-      { key: 'email', header: 'Email' },
-      { key: 'phone_no', header: 'Phone' },
-      { key: 'id_type', header: 'ID Type' },
-      { key: 'id_number', header: 'ID Number' },
-      {
-        key: 'year_joined',
-        header: 'Year Joined',
-        formatter: (_, row) => row.year_joined ?? '',
-      },
-      { key: 'salary', header: 'Salary', formatter: (_, row) => row.salary?.toString() ?? '' },
-      {
-        key: 'created_at',
-        header: 'Created At',
-        formatter: (_, row) => row.created_at ?? '',
-      },
-      {
-        key: 'updated_at',
-        header: 'Updated At',
-        formatter: (_, row) => row.updated_at ?? '',
-      },
-    ];
-
-    downloadCsv('employees.csv', employees, columns);
   };
 
   if (viewingAttendance) {
-    return (
-      <AttendanceView
-        employee={viewingAttendance}
-        onClose={() => setViewingAttendance(null)}
-      />
-    );
+    return <AttendanceView employee={viewingAttendance} onClose={() => setViewingAttendance(null)} />;
   }
 
   if (showForm) {
-    return (
-      <EmployeeForm
-        employee={editingEmployee}
-        onClose={handleFormClose}
-      />
-    );
+    return <EmployeeForm employee={editingEmployee} onClose={handleFormClose} />;
   }
-
-
 
   return (
     <div>
@@ -127,7 +107,6 @@ export default function EmployeeManagement() {
             <Download size={20} />
             Export CSV
           </button>
-
           <button
             onClick={() => setShowForm(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
@@ -151,30 +130,18 @@ export default function EmployeeManagement() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Year Joined
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Salary
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Joined</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {employees.map((employee) => (
                 <tr key={employee.employee_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {employee.employee_name}
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">{employee.employee_name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{employee.phone_no}</div>
@@ -193,16 +160,10 @@ export default function EmployeeManagement() {
                     >
                       <Calendar size={18} />
                     </button>
-                    <button
-                      onClick={() => handleEdit(employee)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
+                    <button onClick={() => handleEdit(employee)} className="text-indigo-600 hover:text-indigo-900 mr-4">
                       Edit
                     </button>
-                    <button
-                      onClick={() => handleDelete(employee.employee_id!)}
-                      className="text-red-600 hover:text-red-900"
-                    >
+                    <button onClick={() => handleDelete(employee.employee_id!)} className="text-red-600 hover:text-red-900">
                       Delete
                     </button>
                   </td>
@@ -210,6 +171,14 @@ export default function EmployeeManagement() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            page={page}
+            pages={pages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, type Attendance } from '../lib/api';
 import { Download, MapPin } from 'lucide-react';
+import Pagination from './Pagination';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
 type AttRow = Attendance & { employee_name?: string };
@@ -9,16 +10,22 @@ export default function AttendanceManagement() {
   const [attendance, setAttendance] = useState<AttRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
 
   useEffect(() => {
     fetchAttendance();
-  }, []);
+  }, [page, pageSize]);
 
   const fetchAttendance = async () => {
     setLoading(true);
     try {
-      const data = await api.attendance.getAll();
-      setAttendance((data as AttRow[]) || []);
+      const data = await api.attendance.getAll(page, pageSize);
+      setAttendance((data.items as AttRow[]) || []);
+      setTotal(data.total);
+      setPages(data.pages);
     } catch (error) {
       console.error('Error fetching attendance:', error);
       alert('Failed to fetch attendance');
@@ -26,6 +33,9 @@ export default function AttendanceManagement() {
       setLoading(false);
     }
   };
+
+  const handlePageChange = (p: number) => setPage(p);
+  const handlePageSizeChange = (s: number) => { setPageSize(s); setPage(1); };
 
   const approve = async (id: number, status: 'present' | 'absent' | 'late') => {
     setUpdating(id);
@@ -39,21 +49,24 @@ export default function AttendanceManagement() {
     }
   };
 
-  const handleExport = () => {
-    if (attendance.length === 0) {
-      alert('No attendance records to export.');
-      return;
+  const handleExport = async () => {
+    try {
+      const data = await api.attendance.getAll(1, 10000);
+      const all = data.items as AttRow[];
+      if (all.length === 0) { alert('No attendance records to export.'); return; }
+      const columns: CsvColumn<AttRow>[] = [
+        { key: 'id', header: 'ID' },
+        { key: 'employee_id', header: 'Employee ID' },
+        { key: 'employee_name' as any, header: 'Employee Name', formatter: (_, r: any) => r.employee_name || '' },
+        { key: 'date', header: 'Date', formatter: (v) => typeof v === 'string' ? v.split('T')[0] : String(v) },
+        { key: 'checkin', header: 'Check In', formatter: (v) => v ? String(v).slice(0, 5) : '-' },
+        { key: 'attendance', header: 'Status' },
+        { key: 'created_at', header: 'Created At', formatter: (v) => v ? String(v) : '' },
+      ];
+      downloadCsv('attendance.csv', all, columns);
+    } catch {
+      alert('Failed to export attendance');
     }
-    const columns: CsvColumn<AttRow>[] = [
-      { key: 'id', header: 'ID' },
-      { key: 'employee_id', header: 'Employee ID' },
-      { key: 'employee_name' as any, header: 'Employee Name', formatter: (_, r: any) => r.employee_name || '' },
-      { key: 'date', header: 'Date', formatter: (v) => typeof v === 'string' ? v.split('T')[0] : String(v) },
-      { key: 'checkin', header: 'Check In', formatter: (v) => v ? String(v).slice(0, 5) : '-' },
-      { key: 'attendance', header: 'Status' },
-      { key: 'created_at', header: 'Created At', formatter: (v) => v ? String(v) : '' },
-    ];
-    downloadCsv('attendance.csv', attendance, columns);
   };
 
   const formatTime = (t: string | null | undefined) => t ? String(t).slice(0, 5) : '-';
@@ -63,7 +76,7 @@ export default function AttendanceManagement() {
     const cls = status === 'present' ? 'bg-green-100 text-green-800'
       : status === 'absent' ? 'bg-red-100 text-red-800'
       : status === 'late' ? 'bg-yellow-100 text-yellow-800'
-      : 'bg-orange-100 text-orange-800'; // pending
+      : 'bg-orange-100 text-orange-800';
     const label = status === 'pending' ? 'Under Review' : status.charAt(0).toUpperCase() + status.slice(1);
     return <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${cls}`}>{label}</span>;
   };
@@ -160,6 +173,14 @@ export default function AttendanceManagement() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            page={page}
+            pages={pages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </div>
       )}
     </div>

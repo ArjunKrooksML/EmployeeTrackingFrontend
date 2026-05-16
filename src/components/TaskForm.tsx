@@ -10,6 +10,9 @@ interface TaskFormProps {
 }
 
 export default function TaskForm({ task, employees, projects, onClose }: TaskFormProps) {
+  const TASK_TYPES = ['Tools', 'Coupler Supply', 'Machine Mobilization', 'Machine Demobilization', 'Samples Testing'];
+  const TOOLS_TYPES = ['Chasers', 'Rebar Caps', 'Forging Dyes', 'Gloves', 'Hydraulic Oil', 'Miscellaneous'];
+
   const [formData, setFormData] = useState({
     task_name: '',
     description: '',
@@ -19,6 +22,8 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
     priority: 'medium',
     start_date: '',
     deadline: '',
+    task_type: '',
+    tools_type: '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +38,8 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
         priority: task.priority,
         start_date: task.start_date || '',
         deadline: task.deadline || '',
+        task_type: task.task_type || '',
+        tools_type: task.tools_type || '',
       });
     }
   }, [task]);
@@ -59,6 +66,8 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
       start_date: formData.start_date || null,
       deadline: formData.deadline || null,
       iscompleted: formData.status === 'completed',
+      task_type: formData.task_type || null,
+      tools_type: formData.task_type === 'Tools' ? (formData.tools_type || null) : null,
     };
 
     try {
@@ -79,10 +88,12 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'task_type' && value !== 'Tools' ? { tools_type: '' } : {}),
+    }));
   };
 
   return (
@@ -124,7 +135,41 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Task Type
+            </label>
+            <select
+              name="task_type"
+              value={formData.task_type}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">Select type</option>
+              {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {formData.task_type === 'Tools' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tools Type
+              </label>
+              <select
+                name="tools_type"
+                value={formData.tools_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Select tool</option>
+                {TOOLS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Project
@@ -168,7 +213,7 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Priority

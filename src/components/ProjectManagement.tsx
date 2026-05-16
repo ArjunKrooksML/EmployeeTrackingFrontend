@@ -80,22 +80,23 @@ export default function ProjectManagement() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Project Management</h2>
-        <div className="flex gap-3">
+      <div className="flex justify-between items-center mb-6 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Project Management</h2>
+        <div className="flex gap-2">
           <button
             onClick={handleExport}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 border border-gray-200"
+            className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-1.5 border border-gray-200 text-sm"
           >
-            <Download size={20} />
-            Export CSV
+            <Download size={16} />
+            <span className="hidden sm:inline">Export CSV</span>
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+            className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-1.5 text-sm"
           >
-            <FolderPlus size={20} />
-            New Project
+            <FolderPlus size={16} />
+            <span className="hidden sm:inline">New Project</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>

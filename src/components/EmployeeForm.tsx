@@ -19,7 +19,10 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     id_type_other: '',
     id_number: '',
     year_joined: '',
-    salary: '',
+    basic: '',
+    da: '',
+    hra: '',
+    others: '',
     role: 'employee',
   });
   const [loading, setLoading] = useState(false);
@@ -42,7 +45,10 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
         id_type_other: '',
         id_number: employee.id_number || '',
         year_joined: employee.year_joined || '',
-        salary: employee.salary?.toString() || '',
+        basic: employee.basic?.toString() || '',
+        da: employee.da?.toString() || '',
+        hra: employee.hra?.toString() || '',
+        others: employee.others?.toString() || '',
         role: (employee as any).role || 'employee',
       });
     }
@@ -58,7 +64,10 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     const payload: any = {
       ...formData,
       id_type: finalIdType,
-      salary: parseInt(formData.salary) || 0,
+      basic: parseInt(formData.basic) || 0,
+      da: parseInt(formData.da) || 0,
+      hra: parseInt(formData.hra) || 0,
+      others: parseInt(formData.others) || 0,
       year_joined: formData.year_joined || null,
     };
     delete payload.id_type_other;
@@ -227,7 +236,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Date of Birth <span className="text-red-500">*</span>
@@ -310,35 +319,41 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Year Joined
-            </label>
-            <input
-              type="text"
-              name="year_joined"
-              value={formData.year_joined}
-              onChange={handleChange}
-              maxLength={10}
-              placeholder="YYYY"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Year Joined</label>
+          <input
+            type="text"
+            name="year_joined"
+            value={formData.year_joined}
+            onChange={handleChange}
+            maxLength={10}
+            placeholder="YYYY"
+            className="w-full sm:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Salary <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              name="salary"
-              value={formData.salary}
-              onChange={handleChange}
-              required
-              min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+          <p className="text-sm font-semibold text-gray-700">Salary Breakdown</p>
+          <div className="grid grid-cols-2 gap-3">
+            {(['basic', 'da', 'hra', 'others'] as const).map(field => (
+              <div key={field}>
+                <label className="block text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">{field}</label>
+                <input
+                  type="number"
+                  name={field}
+                  value={(formData as any)[field]}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between items-center pt-1 border-t border-gray-100 text-sm">
+            <span className="font-medium text-gray-600">Gross Salary</span>
+            <span className="font-bold text-blue-700">
+              ₹{(parseInt(formData.basic)||0) + (parseInt(formData.da)||0) + (parseInt(formData.hra)||0) + (parseInt(formData.others)||0)}
+            </span>
           </div>
         </div>
 

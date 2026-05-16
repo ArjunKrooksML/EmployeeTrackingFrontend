@@ -18,11 +18,36 @@ export interface Employee {
   id_type: string;
   id_number: string;
   year_joined?: string | null;
-  salary: number;
+  basic: number;
+  da: number;
+  hra: number;
+  others: number;
   role?: string;
   generated_password?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface SalaryResult {
+  employee_id: number;
+  employee_name: string;
+  month: number;
+  year: number;
+  basic: number;
+  da: number;
+  hra: number;
+  others: number;
+  gross_salary: number;
+  lates_count: number;
+  absents_from_lates: number;
+  half_day_absents: number;
+  full_absents: number;
+  paid_leave_used: boolean;
+  leave_deduction: number;
+  advance_deduction: number;
+  total_deduction: number;
+  net_salary: number;
+  working_days: number;
 }
 
 export interface Project {
@@ -45,6 +70,8 @@ export interface Task {
   iscompleted?: boolean;
   status: string;
   priority: string;
+  task_type?: string | null;
+  tools_type?: string | null;
   created?: string;
 }
 
@@ -102,21 +129,22 @@ async function refreshToken(): Promise<string | null> {
       body: JSON.stringify({ refresh_token: refresh }),
     });
 
-    if (!res.ok) {
+    if (res.status === 401) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       return null;
     }
 
+    if (!res.ok) return null;
+
     const data = await res.json();
     if (data.access_token) {
       localStorage.setItem('accessToken', data.access_token);
+      if (data.refresh_token) localStorage.setItem('refreshToken', data.refresh_token);
       return data.access_token;
     }
     return null;
   } catch {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     return null;
   }
 }
@@ -330,6 +358,18 @@ export const api = {
         body: JSON.stringify({ status }),
       });
     },
+  },
+  salary: {
+    computeAll: async (month: number, year: number): Promise<SalaryResult[]> =>
+      apiRequest<SalaryResult[]>('/salary/compute/all', {
+        method: 'POST',
+        body: JSON.stringify({ month, year }),
+      }),
+    saveOne: async (employee_id: number, month: number, year: number, advance_deduction: number): Promise<SalaryResult> =>
+      apiRequest<SalaryResult>('/salary/save', {
+        method: 'POST',
+        body: JSON.stringify({ employee_id, month, year, advance_deduction }),
+      }),
   },
 };
 

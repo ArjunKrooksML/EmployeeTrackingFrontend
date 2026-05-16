@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet } from 'lucide-react';
 import EmployeeManagement from './components/EmployeeManagement';
 import ProjectManagement from './components/ProjectManagement';
 import TaskManagement from './components/TaskManagement';
 import AttendanceManagement from './components/AttendanceManagement';
 import LeaveManagement from './components/LeaveManagement';
 import AdminDashboard from './components/AdminDashboard';
+import Payroll from './components/Payroll';
 import Login from './components/Login';
 import type { AdminUser } from './lib/api';
 import ChangePasswordModal from './components/ChangePasswordModal';
 
-type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves';
+type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll';
 type UserT = AdminUser;
 
 const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
@@ -20,6 +21,7 @@ const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
   { key: 'tasks', icon: <ListChecks size={20} />, label: 'Tasks' },
   { key: 'attendance', icon: <Calendar size={20} />, label: 'Attendance' },
   { key: 'leaves', icon: <Briefcase size={20} />, label: 'Leaves' },
+  { key: 'payroll', icon: <Wallet size={20} />, label: 'Payroll' },
 ];
 
 function App() {
@@ -156,27 +158,29 @@ function App() {
             {tab === 'tasks' && <TaskManagement />}
             {tab === 'attendance' && <AttendanceManagement />}
             {tab === 'leaves' && <LeaveManagement />}
+            {tab === 'payroll' && <Payroll />}
           </div>
         </main>
       </div>
 
       {/* Bottom nav — mobile only */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex md:hidden z-30">
-        {NAV_ITEMS.map(item => {
-          const active = tab === item.key;
-          return (
-            <button
-              key={item.key}
-              onClick={() => setTab(item.key)}
-              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition relative ${active ? 'text-amber-600' : 'text-slate-400'
-                }`}
-            >
-              {active && <span className="absolute top-0 inset-x-3 h-0.5 rounded-b-full bg-amber-500" />}
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 md:hidden z-30">
+        <div className="flex overflow-x-auto scrollbar-none">
+          {NAV_ITEMS.map(item => {
+            const active = tab === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setTab(item.key)}
+                className={`flex-shrink-0 flex flex-col items-center justify-center py-2 px-3 gap-0.5 text-xs font-medium transition relative min-w-[60px] ${active ? 'text-amber-600' : 'text-slate-400'}`}
+              >
+                {active && <span className="absolute top-0 inset-x-2 h-0.5 rounded-b-full bg-amber-500" />}
+                {item.icon}
+                <span className="truncate max-w-[52px]">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {showProfile && user && (

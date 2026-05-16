@@ -83,14 +83,14 @@ export default function AttendanceManagement() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">All Attendance Records</h2>
+      <div className="flex justify-between items-center mb-6 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">All Attendance Records</h2>
         <button
           onClick={handleExport}
-          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 border border-gray-200"
+          className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-1.5 border border-gray-200 text-sm"
         >
-          <Download size={20} />
-          Export CSV
+          <Download size={16} />
+          <span className="hidden sm:inline">Export CSV</span>
         </button>
       </div>
 
@@ -103,84 +103,147 @@ export default function AttendanceManagement() {
           <p className="text-gray-500">No attendance records found.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {attendance.map((record) => (
-                <tr key={record.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {record.employee_name || record.employee_id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(record.date)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatTime(record.checkin)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{statusBadge(record.attendance)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {record.lat && record.lng ? (
-                      <a
-                        href={`https://www.openstreetmap.org/?mlat=${record.lat}&mlon=${record.lng}&zoom=16`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
-                        title="View Location"
-                      >
-                        <MapPin size={16} />
-                        View Map
-                      </a>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {record.attendance === 'pending' ? (
-                      <div className="flex gap-2">
-                        <button
-                          disabled={updating === record.id}
-                          onClick={() => approve(record.id, 'present')}
-                          className="px-3 py-1 text-xs font-medium bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition"
-                        >
-                          {updating === record.id ? '…' : 'Present'}
-                        </button>
-                        <button
-                          disabled={updating === record.id}
-                          onClick={() => approve(record.id, 'late')}
-                          className="px-3 py-1 text-xs font-medium bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50 transition"
-                        >
-                          Late
-                        </button>
-                        <button
-                          disabled={updating === record.id}
-                          onClick={() => approve(record.id, 'absent')}
-                          className="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 transition"
-                        >
-                          Absent
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">Resolved</span>
-                    )}
-                  </td>
+        <div>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination
-            page={page}
-            pages={pages}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {attendance.map((record) => (
+                  <tr key={record.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {record.employee_name || record.employee_id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(record.date)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatTime(record.checkin)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{statusBadge(record.attendance)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {record.lat && record.lng ? (
+                        <a
+                          href={`https://www.openstreetmap.org/?mlat=${record.lat}&mlon=${record.lng}&zoom=16`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1"
+                        >
+                          <MapPin size={16} />
+                          View Map
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {record.attendance === 'pending' ? (
+                        <div className="flex gap-2">
+                          <button
+                            disabled={updating === record.id}
+                            onClick={() => approve(record.id, 'present')}
+                            className="px-3 py-1 text-xs font-medium bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition"
+                          >
+                            {updating === record.id ? '…' : 'Present'}
+                          </button>
+                          <button
+                            disabled={updating === record.id}
+                            onClick={() => approve(record.id, 'late')}
+                            className="px-3 py-1 text-xs font-medium bg-yellow-500 text-white rounded-md hover:bg-yellow-600 disabled:opacity-50 transition"
+                          >
+                            Late
+                          </button>
+                          <button
+                            disabled={updating === record.id}
+                            onClick={() => approve(record.id, 'absent')}
+                            className="px-3 py-1 text-xs font-medium bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 transition"
+                          >
+                            Absent
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">Resolved</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {attendance.map((record) => (
+              <div key={record.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{record.employee_name || `Emp #${record.employee_id}`}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(record.date)}</p>
+                  </div>
+                  {statusBadge(record.attendance)}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                  <span>Check-in: <span className="font-medium text-gray-700">{formatTime(record.checkin)}</span></span>
+                  {record.lat && record.lng && (
+                    <a
+                      href={`https://www.openstreetmap.org/?mlat=${record.lat}&mlon=${record.lng}&zoom=16`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 flex items-center gap-1"
+                    >
+                      <MapPin size={12} /> Map
+                    </a>
+                  )}
+                </div>
+                {record.attendance === 'pending' && (
+                  <div className="flex gap-2 pt-2 border-t border-gray-100">
+                    <button
+                      disabled={updating === record.id}
+                      onClick={() => approve(record.id, 'present')}
+                      className="flex-1 py-1.5 text-xs font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {updating === record.id ? '…' : 'Present'}
+                    </button>
+                    <button
+                      disabled={updating === record.id}
+                      onClick={() => approve(record.id, 'late')}
+                      className="flex-1 py-1.5 text-xs font-medium bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50"
+                    >
+                      Late
+                    </button>
+                    <button
+                      disabled={updating === record.id}
+                      onClick={() => approve(record.id, 'absent')}
+                      className="flex-1 py-1.5 text-xs font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                    >
+                      Absent
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
         </div>
       )}
     </div>

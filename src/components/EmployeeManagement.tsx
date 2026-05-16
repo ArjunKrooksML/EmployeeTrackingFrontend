@@ -77,7 +77,7 @@ export default function EmployeeManagement() {
         { key: 'id_type', header: 'ID Type' },
         { key: 'id_number', header: 'ID Number' },
         { key: 'year_joined', header: 'Year Joined', formatter: (_, row) => row.year_joined ?? '' },
-        { key: 'salary', header: 'Salary', formatter: (_, row) => row.salary?.toString() ?? '' },
+        { key: 'basic', header: 'Gross Salary', formatter: (_, row) => String((row.basic || 0) + (row.da || 0) + (row.hra || 0) + (row.others || 0)) },
         { key: 'created_at', header: 'Created At', formatter: (_, row) => row.created_at ?? '' },
         { key: 'updated_at', header: 'Updated At', formatter: (_, row) => row.updated_at ?? '' },
       ];
@@ -97,22 +97,23 @@ export default function EmployeeManagement() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Employee Management</h2>
-        <div className="flex gap-3">
+      <div className="flex justify-between items-center mb-6 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Employee Management</h2>
+        <div className="flex gap-2">
           <button
             onClick={handleExport}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 border border-gray-200"
+            className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-1.5 border border-gray-200 text-sm"
           >
-            <Download size={20} />
-            Export CSV
+            <Download size={16} />
+            <span className="hidden sm:inline">Export CSV</span>
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-1.5 text-sm"
           >
-            <UserPlus size={20} />
-            Add Employee
+            <UserPlus size={16} />
+            <span className="hidden sm:inline">Add Employee</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
@@ -126,59 +127,109 @@ export default function EmployeeManagement() {
           <p className="text-gray-500">No employees found. Add your first employee to get started.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Joined</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salary</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {employees.map((employee) => (
-                <tr key={employee.employee_id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{employee.employee_name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{employee.phone_no}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{employee.year_joined || 'N/A'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">₹{employee.salary.toLocaleString()}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <div>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Joined</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Salary</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {employees.map((employee) => (
+                  <tr key={employee.employee_id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{employee.employee_name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{employee.phone_no}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{employee.year_joined || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">₹{((employee.basic || 0) + (employee.da || 0) + (employee.hra || 0) + (employee.others || 0)).toLocaleString()}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleViewAttendance(employee)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        title="View Attendance"
+                      >
+                        <Calendar size={18} />
+                      </button>
+                      <button onClick={() => handleEdit(employee)} className="text-indigo-600 hover:text-indigo-900 mr-4">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(employee.employee_id!)} className="text-red-600 hover:text-red-900">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {employees.map((employee) => {
+              const gross = (employee.basic || 0) + (employee.da || 0) + (employee.hra || 0) + (employee.others || 0);
+              return (
+                <div key={employee.employee_id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="font-semibold text-gray-900">{employee.employee_name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{employee.phone_no}</p>
+                    </div>
+                    <span className="text-sm font-bold text-blue-700">₹{gross.toLocaleString()}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">Joined: {employee.year_joined || 'N/A'}</p>
+                  <div className="flex gap-2 pt-2 border-t border-gray-100">
                     <button
                       onClick={() => handleViewAttendance(employee)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                      title="View Attendance"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
                     >
-                      <Calendar size={18} />
+                      <Calendar size={13} /> Attendance
                     </button>
-                    <button onClick={() => handleEdit(employee)} className="text-indigo-600 hover:text-indigo-900 mr-4">
+                    <button
+                      onClick={() => handleEdit(employee)}
+                      className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
+                    >
                       Edit
                     </button>
-                    <button onClick={() => handleDelete(employee.employee_id!)} className="text-red-600 hover:text-red-900">
+                    <button
+                      onClick={() => handleDelete(employee.employee_id!)}
+                      className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 ml-auto"
+                    >
                       Delete
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination
-            page={page}
-            pages={pages}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
+                  </div>
+                </div>
+              );
+            })}
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
         </div>
       )}
     </div>

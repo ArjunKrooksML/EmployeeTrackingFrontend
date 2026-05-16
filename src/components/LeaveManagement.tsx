@@ -122,93 +122,156 @@ export default function LeaveManagement() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Leave Info</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reason</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {leaves.map((leave) => (
-                <tr key={leave.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
-                        {leave.employee_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-bold text-gray-900">{leave.employee_name}</div>
-                        <div className="text-xs text-gray-500 font-medium">ID: #{leave.employee_id}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-800 capitalize select-none">{leave.leave_type}</div>
-                    <div className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
-                      <CalendarIcon size={14} className="text-gray-400" />
-                      {new Date(leave.leave_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 capitalize">
-                      <Clock size={12} />
-                      {leave.day_type.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-5">
-                    {leave.reason ? (
-                      <div className="text-sm text-gray-600 max-w-xs truncate bg-gray-50 p-2 rounded border border-gray-100" title={leave.reason}>
-                        {leave.reason}
-                      </div>
-                    ) : (
-                      <span className="text-sm italic text-gray-400">No reason</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                    {leave.status === 'pending' ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleUpdateStatus(leave.id, 'approved')}
-                          disabled={updatingId === leave.id}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg text-xs font-bold transition disabled:opacity-50"
-                        >
-                          <CheckCircle2 size={16} />
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleUpdateStatus(leave.id, 'rejected')}
-                          disabled={updatingId === leave.id}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg text-xs font-bold transition disabled:opacity-50"
-                        >
-                          <XCircle size={16} />
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full capitalize ${
-                        leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                      }`}>
-                        {leave.status}
-                      </span>
-                    )}
-                  </td>
+        <div>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Leave Info</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reason</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination
-            page={page}
-            pages={pages}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {leaves.map((leave) => (
+                  <tr key={leave.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
+                          {leave.employee_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-bold text-gray-900">{leave.employee_name}</div>
+                          <div className="text-xs text-gray-500 font-medium">ID: #{leave.employee_id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-gray-800 capitalize">{leave.leave_type}</div>
+                      <div className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
+                        <CalendarIcon size={14} className="text-gray-400" />
+                        {new Date(leave.leave_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 capitalize">
+                        <Clock size={12} />
+                        {leave.day_type.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      {leave.reason ? (
+                        <div className="text-sm text-gray-600 max-w-xs truncate bg-gray-50 p-2 rounded border border-gray-100" title={leave.reason}>
+                          {leave.reason}
+                        </div>
+                      ) : (
+                        <span className="text-sm italic text-gray-400">No reason</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                      {leave.status === 'pending' ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleUpdateStatus(leave.id, 'approved')}
+                            disabled={updatingId === leave.id}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                          >
+                            <CheckCircle2 size={16} />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStatus(leave.id, 'rejected')}
+                            disabled={updatingId === leave.id}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                          >
+                            <XCircle size={16} />
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full capitalize ${
+                          leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {leave.status}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {leaves.map((leave) => (
+              <div key={leave.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                      {leave.employee_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{leave.employee_name}</p>
+                      <p className="text-xs text-gray-500 capitalize">{leave.leave_type} leave</p>
+                    </div>
+                  </div>
+                  {leave.status !== 'pending' && (
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full capitalize ${
+                      leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {leave.status}
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500 space-y-1 mb-3">
+                  <p className="flex items-center gap-1.5">
+                    <CalendarIcon size={12} />
+                    {new Date(leave.leave_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    <span className="ml-1 capitalize">· {leave.day_type.replace('_', ' ')}</span>
+                  </p>
+                  {leave.reason && <p className="text-gray-600 line-clamp-2">{leave.reason}</p>}
+                </div>
+                {leave.status === 'pending' && (
+                  <div className="flex gap-2 pt-2 border-t border-gray-100">
+                    <button
+                      onClick={() => handleUpdateStatus(leave.id, 'approved')}
+                      disabled={updatingId === leave.id}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={14} /> Approve
+                    </button>
+                    <button
+                      onClick={() => handleUpdateStatus(leave.id, 'rejected')}
+                      disabled={updatingId === leave.id}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
         </div>
       )}
     </div>

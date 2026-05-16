@@ -133,33 +133,34 @@ export default function TaskManagement() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Task Management</h2>
-        <div className="flex gap-3">
+      <div className="flex justify-between items-center mb-6 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Task Management</h2>
+        <div className="flex gap-2">
           <button
             onClick={handleExport}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2 border border-gray-200"
+            className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-1.5 border border-gray-200 text-sm"
           >
-            <Download size={20} />
-            Export CSV
+            <Download size={16} />
+            <span className="hidden sm:inline">Export CSV</span>
           </button>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition flex items-center gap-2"
+            className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition flex items-center gap-1.5 text-sm"
           >
-            <ListTodo size={20} />
-            New Task
+            <ListTodo size={16} />
+            <span className="hidden sm:inline">New Task</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex-1 min-w-[130px]">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
           <select
             value={filterStatus}
             onChange={(e) => handleFilterStatus(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="">All Status</option>
             <option value="todo">To Do</option>
@@ -169,12 +170,12 @@ export default function TaskManagement() {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Priority</label>
+        <div className="flex-1 min-w-[130px]">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
           <select
             value={filterPriority}
             onChange={(e) => handleFilterPriority(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="">All Priorities</option>
             <option value="urgent">Urgent</option>
@@ -200,59 +201,102 @@ export default function TaskManagement() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tasks.map((task) => (
-                <tr key={task.task_id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{task.task_name}</div>
-                    {task.description && (
-                      <div className="text-sm text-gray-500 line-clamp-1">{task.description}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getProjectName(task.project_id)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getEmployeeName(task.assigned_to)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
+        <div>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-x-auto overflow-y-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {tasks.map((task) => (
+                  <tr key={task.task_id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{task.task_name}</div>
+                      {task.description && (
+                        <div className="text-sm text-gray-500 line-clamp-1">{task.description}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getProjectName(task.project_id)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getEmployeeName(task.assigned_to)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
+                        {task.priority}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(task.status)}`}>
+                        {task.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(task.deadline)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button onClick={() => handleEdit(task)} className="text-orange-600 hover:text-orange-900 mr-4">
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {tasks.map((task) => (
+              <div key={task.task_id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <p className="font-semibold text-gray-900 text-sm flex-1 pr-2">{task.task_name}</p>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
                       {task.priority}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(task.status)}`}>
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>
                       {task.status.replace('_', ' ')}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(task.deadline)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onClick={() => handleEdit(task)} className="text-orange-600 hover:text-orange-900 mr-4">
-                      Edit
-                    </button>
-                    <span className="text-gray-400 text-sm">Delete disabled</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination
-            page={page}
-            pages={pages}
-            total={total}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-          />
+                  </div>
+                </div>
+                {task.description && <p className="text-xs text-gray-500 mb-2 line-clamp-2">{task.description}</p>}
+                <div className="text-xs text-gray-500 space-y-1 mb-3">
+                  <p><span className="font-medium">Project:</span> {getProjectName(task.project_id)}</p>
+                  <p><span className="font-medium">Assigned:</span> {getEmployeeName(task.assigned_to)}</p>
+                  <p><span className="font-medium">Due:</span> {formatDate(task.deadline)}</p>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => handleEdit(task)}
+                    className="px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            ))}
+            <Pagination
+              page={page}
+              pages={pages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          </div>
         </div>
       )}
     </div>

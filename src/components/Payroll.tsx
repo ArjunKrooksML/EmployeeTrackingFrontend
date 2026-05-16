@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { api, type SalaryResult } from '../lib/api';
-import { Save, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw, FileDown } from 'lucide-react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import PayslipPDF from './PayslipPDF';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -107,7 +109,7 @@ export default function Payroll() {
                 <th className="px-4 py-3 text-right">Leave Ded.</th>
                 <th className="px-4 py-3 text-right w-32">Advance Ded.</th>
                 <th className="px-4 py-3 text-right">Net</th>
-                <th className="px-4 py-3"></th>
+                <th className="px-4 py-3 text-center" colSpan={2}></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -155,6 +157,28 @@ export default function Payroll() {
                           : <Save size={12} />}
                         {saved ? 'Saved' : 'Save'}
                       </button>
+                    </td>
+                    <td className="px-4 py-3">
+                      {saved ? (
+                        <PDFDownloadLink
+                          document={<PayslipPDF result={rc} advance={parseFloat(advances[r.employee_id] || '0') || 0} />}
+                          fileName={`payslip-${r.employee_name.replace(/\s+/g, '-')}-${MONTHS[month - 1]}-${year}.pdf`}
+                        >
+                          {({ loading: pdfLoading }) => (
+                            <button
+                              disabled={pdfLoading}
+                              className="flex items-center gap-1 px-2 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              <FileDown size={12} />
+                              {pdfLoading ? '…' : 'PDF'}
+                            </button>
+                          )}
+                        </PDFDownloadLink>
+                      ) : (
+                        <button disabled className="flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-400 rounded text-xs font-medium cursor-not-allowed">
+                          <FileDown size={12} /> PDF
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

@@ -84,10 +84,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5fa]">
+    <div className="min-h-screen bg-slate-50">
       {/* Top nav */}
-      <nav className="bg-gradient-to-r from-blue-950 via-blue-800 to-indigo-700 text-white shadow-lg">
-        <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
+      <nav className="bg-[#0f0f18] text-white border-b border-white/5">
+        <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-14">
           <div className="flex items-center gap-2 sm:gap-3">
             <button type="button" onClick={() => setShowDrawer(true)} className="md:hidden p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition mr-1">
               <Menu size={20} />
@@ -143,16 +143,16 @@ function App() {
         </div>
       </nav>
 
-      <div className="flex min-h-[calc(100vh-4rem)] relative">
+      <div className="flex min-h-[calc(100vh-3.5rem)] relative">
         {/* Sidebar — desktop only */}
-        <aside className="hidden md:flex w-64 bg-slate-950 text-slate-100 flex-col px-4 py-6 space-y-3 shadow-xl">
+        <aside className="hidden md:flex w-60 bg-[#0f0f18] text-slate-100 flex-col px-3 py-5 space-y-0.5 border-r border-white/5">
           {NAV_ITEMS.map(item => (
             <button
               key={item.key}
               onClick={() => navigate(item.key)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === item.key
-                ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
-                : 'text-slate-300/80 hover:bg-white/10 hover:text-white'
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${tab === item.key
+                ? 'bg-indigo-500/15 text-indigo-300 border-l-2 border-indigo-500'
+                : 'text-slate-400 hover:bg-white/8 hover:text-slate-100 border-l-2 border-transparent'
                 }`}
             >
               {item.icon}
@@ -162,15 +162,15 @@ function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 w-full overflow-hidden px-2 sm:px-10 py-6 sm:py-8">
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border-t-4 border-amber-400 border border-slate-100/80 p-3 sm:p-6 overflow-x-auto">
-            {tab === 'dashboard' && <AdminDashboard key={tabKey} />}
-            {tab === 'employees' && <EmployeeManagement key={tabKey} />}
-            {tab === 'projects' && <ProjectManagement key={tabKey} />}
-            {tab === 'tasks' && <TaskManagement key={tabKey} />}
-            {tab === 'attendance' && <AttendanceManagement key={tabKey} />}
-            {tab === 'leaves' && <LeaveManagement key={tabKey} />}
-            {tab === 'payroll' && <Payroll key={tabKey} />}
+        <main className="flex-1 w-full overflow-hidden px-3 sm:px-8 py-6">
+          <div key={`${tab}-${tabKey}`} className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200/70 p-3 sm:p-6 overflow-x-auto animate-fade-in-up">
+            {tab === 'dashboard' && <AdminDashboard />}
+            {tab === 'employees' && <EmployeeManagement />}
+            {tab === 'projects' && <ProjectManagement />}
+            {tab === 'tasks' && <TaskManagement />}
+            {tab === 'attendance' && <AttendanceManagement />}
+            {tab === 'leaves' && <LeaveManagement />}
+            {tab === 'payroll' && <Payroll />}
           </div>
         </main>
       </div>
@@ -179,16 +179,16 @@ function App() {
       {showDrawer && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDrawer(false)} />
-          <aside className="relative w-64 bg-slate-950 text-slate-100 flex flex-col px-4 py-6 space-y-1 shadow-2xl h-full overflow-y-auto">
+          <aside className="relative w-60 bg-[#0f0f18] text-slate-100 flex flex-col px-3 py-5 space-y-0.5 h-full overflow-y-auto border-r border-white/5">
             <div className="flex items-center justify-between mb-4 px-1">
               <span className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Menu</span>
               <button onClick={() => setShowDrawer(false)} className="text-slate-400 hover:text-white p-1"><X size={18} /></button>
             </div>
             {NAV_ITEMS.map(item => (
               <button key={item.key} onClick={() => { navigate(item.key); setShowDrawer(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${tab === item.key
-                  ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
-                  : 'text-slate-300/80 hover:bg-white/10 hover:text-white'}`}>
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${tab === item.key
+                  ? 'bg-indigo-500/15 text-indigo-300 border-l-2 border-indigo-500'
+                  : 'text-slate-400 hover:bg-white/8 hover:text-slate-100 border-l-2 border-transparent'}`}>
                 {item.icon}<span>{item.label}</span>
               </button>
             ))}

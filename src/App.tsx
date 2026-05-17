@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu } from 'lucide-react';
 import EmployeeManagement from './components/EmployeeManagement';
 import ProjectManagement from './components/ProjectManagement';
 import TaskManagement from './components/TaskManagement';
@@ -55,6 +55,13 @@ function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showChangePass, setShowChangePass] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [tabKey, setTabKey] = useState(0);
+
+  const navigate = (key: Tab) => {
+    if (tab === key) setTabKey(k => k + 1);
+    else setTab(key);
+  };
 
   const onSignOut = () => {
     setUser(null);
@@ -82,8 +89,13 @@ function App() {
       <nav className="bg-gradient-to-r from-blue-950 via-blue-800 to-indigo-700 text-white shadow-lg">
         <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-16">
           <div className="flex items-center gap-2 sm:gap-3">
-            <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
-            <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax Solutions</h1>
+            <button type="button" onClick={() => setShowDrawer(true)} className="md:hidden p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition mr-1">
+              <Menu size={20} />
+            </button>
+            <button type="button" onClick={() => setTabKey(k => k + 1)} className="flex items-center gap-2 sm:gap-3">
+              <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
+              <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax Solutions</h1>
+            </button>
           </div>
           <div className="relative">
             <button
@@ -137,7 +149,7 @@ function App() {
           {NAV_ITEMS.map(item => (
             <button
               key={item.key}
-              onClick={() => setTab(item.key)}
+              onClick={() => navigate(item.key)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium tracking-tight transition ${tab === item.key
                 ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
                 : 'text-slate-300/80 hover:bg-white/10 hover:text-white'
@@ -151,37 +163,38 @@ function App() {
 
         {/* Main content */}
         <main className="flex-1 w-full overflow-hidden px-2 sm:px-10 py-6 sm:py-8">
-          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border-t-4 border-amber-400 border border-slate-100/80 p-3 sm:p-6 overflow-x-auto pb-24 md:pb-6">
-            {tab === 'dashboard' && <AdminDashboard />}
-            {tab === 'employees' && <EmployeeManagement />}
-            {tab === 'projects' && <ProjectManagement />}
-            {tab === 'tasks' && <TaskManagement />}
-            {tab === 'attendance' && <AttendanceManagement />}
-            {tab === 'leaves' && <LeaveManagement />}
-            {tab === 'payroll' && <Payroll />}
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl border-t-4 border-amber-400 border border-slate-100/80 p-3 sm:p-6 overflow-x-auto">
+            {tab === 'dashboard' && <AdminDashboard key={tabKey} />}
+            {tab === 'employees' && <EmployeeManagement key={tabKey} />}
+            {tab === 'projects' && <ProjectManagement key={tabKey} />}
+            {tab === 'tasks' && <TaskManagement key={tabKey} />}
+            {tab === 'attendance' && <AttendanceManagement key={tabKey} />}
+            {tab === 'leaves' && <LeaveManagement key={tabKey} />}
+            {tab === 'payroll' && <Payroll key={tabKey} />}
           </div>
         </main>
       </div>
 
-      {/* Bottom nav — mobile only */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 md:hidden z-30">
-        <div className="flex overflow-x-auto scrollbar-none">
-          {NAV_ITEMS.map(item => {
-            const active = tab === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => setTab(item.key)}
-                className={`flex-shrink-0 flex flex-col items-center justify-center py-2 px-3 gap-0.5 text-xs font-medium transition relative min-w-[60px] ${active ? 'text-amber-600' : 'text-slate-400'}`}
-              >
-                {active && <span className="absolute top-0 inset-x-2 h-0.5 rounded-b-full bg-amber-500" />}
-                {item.icon}
-                <span className="truncate max-w-[52px]">{item.label}</span>
+      {/* Mobile drawer */}
+      {showDrawer && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDrawer(false)} />
+          <aside className="relative w-64 bg-slate-950 text-slate-100 flex flex-col px-4 py-6 space-y-1 shadow-2xl h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <span className="text-sm font-semibold text-slate-300 tracking-wide uppercase">Menu</span>
+              <button onClick={() => setShowDrawer(false)} className="text-slate-400 hover:text-white p-1"><X size={18} /></button>
+            </div>
+            {NAV_ITEMS.map(item => (
+              <button key={item.key} onClick={() => { navigate(item.key); setShowDrawer(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${tab === item.key
+                  ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400'
+                  : 'text-slate-300/80 hover:bg-white/10 hover:text-white'}`}>
+                {item.icon}<span>{item.label}</span>
               </button>
-            );
-          })}
+            ))}
+          </aside>
         </div>
-      </nav>
+      )}
 
       {showProfile && user && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4">

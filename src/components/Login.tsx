@@ -31,7 +31,16 @@ export default function Login({ onLogin }: Props) {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
+      {/* Mobile dark background with orbs */}
+      <div className="lg:hidden absolute inset-0 bg-[#0a0a14] overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-indigo-600/25 rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 right-0 w-72 h-72 bg-violet-600/20 rounded-full blur-[80px]" />
+        <div className="absolute -bottom-24 left-1/4 w-64 h-64 bg-blue-700/20 rounded-full blur-[80px]" />
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
+      </div>
+
       {/* Left decorative panel */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative bg-[#0a0a14] overflow-hidden flex-col justify-between p-12">
         <div className="absolute inset-0 pointer-events-none">
@@ -88,62 +97,69 @@ export default function Login({ onLogin }: Props) {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-white">
+      <div className="relative z-10 flex-1 flex items-center justify-center p-6 lg:bg-white">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-3 mb-10 justify-center">
-            <img src="/svaas.png" alt="SVAAS" className="h-10 w-10 rounded-xl object-cover shadow border border-gray-100" />
-            <span className="font-semibold text-slate-800 text-lg">SVAAS Inframax</span>
+          {/* Mobile branding */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <img src="/svaas.png" alt="SVAAS" className="h-11 w-11 rounded-xl object-cover border border-white/20 shadow-lg" />
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-tight">SVAAS Inframax Solutions</h1>
+            <p className="text-indigo-300 text-sm mt-1">Admin Portal</p>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
-            <p className="text-slate-500 mt-1 text-sm">Sign in to your admin account</p>
-          </div>
-
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Email</label>
-              <div className="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all bg-slate-50 focus-within:bg-white">
-                <Mail className="text-slate-400 flex-shrink-0" size={16} />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                  className="w-full outline-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400"
-                  placeholder="admin@company.com" />
-              </div>
+          {/* Form card — white card on mobile, transparent on desktop */}
+          <div className="bg-white rounded-2xl p-7 shadow-2xl border border-white/5 lg:bg-transparent lg:rounded-none lg:shadow-none lg:border-none lg:p-0">
+            <div className="mb-7">
+              <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
+              <p className="text-slate-500 mt-1 text-sm">Sign in to your admin account</p>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Password</label>
-              <div className="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all bg-slate-50 focus-within:bg-white">
-                <Lock className="text-slate-400 flex-shrink-0" size={16} />
-                <input type={showPassword ? 'text' : 'password'} value={pass} onChange={e => setPass(e.target.value)} required
-                  className="w-full outline-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400"
-                  placeholder="••••••••" />
-                <button type="button" onClick={() => setShowPassword(v => !v)} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            <form onSubmit={onSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">Email</label>
+                <div className="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all bg-slate-50 focus-within:bg-white">
+                  <Mail className="text-slate-400 flex-shrink-0" size={16} />
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                    className="w-full outline-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400"
+                    placeholder="admin@company.com" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700">Password</label>
+                <div className="flex items-center gap-2.5 border border-slate-200 rounded-xl px-3.5 py-2.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all bg-slate-50 focus-within:bg-white">
+                  <Lock className="text-slate-400 flex-shrink-0" size={16} />
+                  <input type={showPassword ? 'text' : 'password'} value={pass} onChange={e => setPass(e.target.value)} required
+                    className="w-full outline-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400"
+                    placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button type="button" onClick={() => setShowForgot(true)}
+                  className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                  Forgot password?
                 </button>
               </div>
-            </div>
 
-            <div className="flex justify-end">
-              <button type="button" onClick={() => setShowForgot(true)}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
-                Forgot password?
+              {err && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
+                  {err}
+                </div>
+              )}
+
+              <button type="submit" disabled={loading}
+                className="w-full flex justify-center items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold py-2.5 text-sm transition-all disabled:opacity-60 shadow-lg shadow-indigo-500/20">
+                {loading
+                  ? <><div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Signing in...</>
+                  : 'Sign in'}
               </button>
-            </div>
-
-            {err && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3.5 py-2.5">
-                {err}
-              </div>
-            )}
-
-            <button type="submit" disabled={loading}
-              className="w-full flex justify-center items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold py-2.5 text-sm transition-all disabled:opacity-60 shadow-lg shadow-indigo-500/20">
-              {loading
-                ? <><div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Signing in...</>
-                : 'Sign in'}
-            </button>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
 

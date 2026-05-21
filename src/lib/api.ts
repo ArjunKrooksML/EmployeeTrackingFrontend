@@ -132,6 +132,8 @@ async function refreshToken(): Promise<string | null> {
     if (res.status === 401) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('admin:auth-expired'));
       return null;
     }
 

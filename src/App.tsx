@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu } from 'lucide-react';
 import EmployeeManagement from './components/EmployeeManagement';
 import ProjectManagement from './components/ProjectManagement';
@@ -62,6 +62,12 @@ function App() {
     if (tab === key) setTabKey(k => k + 1);
     else setTab(key);
   };
+
+  useEffect(() => {
+    const onExpired = () => { setUser(null); setShowMenu(false); setShowProfile(false); };
+    window.addEventListener('admin:auth-expired', onExpired);
+    return () => window.removeEventListener('admin:auth-expired', onExpired);
+  }, []);
 
   const onSignOut = () => {
     setUser(null);

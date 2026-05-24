@@ -111,12 +111,18 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
       const digitsOnly = value.replace(/\D/g, '').slice(0, 15);
       setFormData({ ...formData, phone_no: digitsOnly });
     } else if (name === 'id_number') {
-      const digitsOnly = value.replace(/\D/g, '');
-      const maxLength = getMaxLengthForIdType(formData.id_type);
-      const limitedValue = digitsOnly.slice(0, maxLength);
+      const idTypeLower = formData.id_type.toLowerCase();
+      let processed: string;
+      if (idTypeLower === 'pan') {
+        processed = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10);
+      } else if (idTypeLower === 'passport') {
+        processed = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
+      } else {
+        processed = value.replace(/\D/g, '').slice(0, 12);
+      }
       setFormData({
         ...formData,
-        [name]: limitedValue,
+        [name]: processed,
       });
     } else if (name === 'id_type') {
       setFormData({
@@ -303,7 +309,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             ID Number <span className="text-red-500">*</span>
             <span className="text-gray-500 text-xs ml-2">
-              ({formData.id_type === 'Aadhaar' ? '12 digits' : formData.id_type === 'PAN' ? '10 digits' : '8 digits'})
+              ({formData.id_type === 'Aadhaar' ? '12 digits' : formData.id_type === 'PAN' ? '10 chars, alphanumeric' : '8 chars, alphanumeric'})
             </span>
           </label>
           <input
@@ -313,8 +319,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
             onChange={handleChange}
             required
             maxLength={getMaxLengthForIdType(formData.id_type)}
-            pattern="[0-9]*"
-            inputMode="numeric"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

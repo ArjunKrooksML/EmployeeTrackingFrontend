@@ -61,6 +61,16 @@ export default function TaskManagement() {
     setShowForm(true);
   };
 
+  const handleDelete = async (task: Task) => {
+    if (!window.confirm(`Delete task "${task.task_name}"? This cannot be undone.`)) return;
+    try {
+      await api.tasks.delete(task.task_id);
+      fetchTasks();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete task');
+    }
+  };
+
   const handleFormClose = () => {
     setShowForm(false);
     setEditingTask(null);
@@ -242,6 +252,9 @@ export default function TaskManagement() {
                       <button onClick={() => handleEdit(task)} className="text-orange-600 hover:text-orange-900 mr-4">
                         Edit
                       </button>
+                      <button onClick={() => handleDelete(task)} className="text-red-500 hover:text-red-700">
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -278,12 +291,18 @@ export default function TaskManagement() {
                   <p><span className="font-medium">Assigned:</span> {getEmployeeName(task.assigned_to)}</p>
                   <p><span className="font-medium">Due:</span> {formatDate(task.deadline)}</p>
                 </div>
-                <div className="pt-2 border-t border-gray-100">
+                <div className="pt-2 border-t border-gray-100 flex gap-2">
                   <button
                     onClick={() => handleEdit(task)}
                     className="px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100"
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(task)}
+                    className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>

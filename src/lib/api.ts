@@ -313,6 +313,8 @@ export const api = {
         body: JSON.stringify(project),
       });
     },
+    delete: async (id: number): Promise<void> =>
+      apiRequest<void>(`/admin/projects/${id}`, { method: 'DELETE' }),
   },
   tasks: {
     getAll: async (page = 1, pageSize = 20, status?: string, priority?: string): Promise<PaginatedResponse<Task>> => {
@@ -333,6 +335,8 @@ export const api = {
         body: JSON.stringify(task),
       });
     },
+    delete: async (id: number): Promise<void> =>
+      apiRequest<void>(`/admin/tasks/${id}`, { method: 'DELETE' }),
   },
   attendance: {
     getEmployeeAttendance: async (employeeId: number): Promise<Attendance[]> => {

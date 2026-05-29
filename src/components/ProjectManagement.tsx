@@ -50,6 +50,16 @@ export default function ProjectManagement() {
     fetchProjects();
   };
 
+  const handleDelete = async (project: Project) => {
+    if (!window.confirm(`Delete project "${project.name}"? This cannot be undone.`)) return;
+    try {
+      await api.projects.delete(project.project_id);
+      fetchProjects();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete project');
+    }
+  };
+
   const handleExport = async () => {
     try {
       const data = await api.projects.getAll(1, 10000);
@@ -142,13 +152,16 @@ export default function ProjectManagement() {
                 <div className="flex gap-2 pt-4 border-t">
                   <button
                     onClick={() => handleEdit(project)}
-                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
+                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition text-sm"
                   >
                     Edit
                   </button>
-                  <span className="flex-1 px-3 py-2 text-center text-gray-400 border border-dashed border-gray-200 rounded text-xs">
-                    Delete unavailable
-                  </span>
+                  <button
+                    onClick={() => handleDelete(project)}
+                    className="flex-1 px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition text-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api, type Task, type Employee, type Project } from '../lib/api';
-import { ListTodo, Download, CheckSquare, X } from 'lucide-react';
+import { ListTodo, Download, CheckSquare, X, LayoutGrid, Table2 } from 'lucide-react';
+import { useToast } from './Toast';
+import { useConfirm } from './ConfirmDialog';
+import TaskBoard from './TaskBoard';
 import TaskForm from './TaskForm';
 import Pagination from './Pagination';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
@@ -21,6 +24,9 @@ export default function TaskManagement() {
   const [pages, setPages] = useState(1);
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<'table' | 'board'>('table');
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => { fetchTasks(); }, [page, pageSize, filterStatus, filterPriority]);
 
@@ -48,9 +54,10 @@ export default function TaskManagement() {
   const handleFormClose = () => { setShowForm(false); setEditingTask(null); fetchTasks(); };
 
   const handleDelete = async (task: Task) => {
-    if (!window.confirm(`Delete task "${task.task_name}"? This cannot be undone.`)) return;
-    try { await api.tasks.delete(task.task_id); fetchTasks(); }
-    catch (err) { alert(err instanceof Error ? err.message : 'Failed to delete task'); }
+    const ok = await confirm({ title: 'Delete Task', message: `Delete "${task.task_name}"? This cannot be undone.`, confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
+    try { await api.tasks.delete(task.task_id); fetchTasks(); toast.success('Task deleted'); }
+    catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to delete task'); }
   };
 
   const toggleSelect = (id: number) => {
@@ -65,10 +72,12 @@ export default function TaskManagement() {
 
   const handleDeleteSelected = async () => {
     if (!selectedIds.size) return;
-    if (!confirm(`Delete ${selectedIds.size} task(s)? This cannot be undone.`)) return;
+    const ok = await confirm({ title: `Delete ${selectedIds.size} Task(s)`, message: 'This will permanently remove all selected tasks. This cannot be undone.', confirmLabel: 'Delete All', danger: true });
+    if (!ok) return;
     const results = await Promise.allSettled([...selectedIds].map(id => api.tasks.delete(id)));
     const failed = results.filter(r => r.status === 'rejected').length;
-    if (failed) alert(`${failed} deletion(s) failed.`);
+    if (failed) toast.error(`${failed} deletion(s) failed`);
+    else toast.success(`${selectedIds.size} task(s) deleted`);
     cancelSelect(); fetchTasks();
   };
 
@@ -85,8 +94,9 @@ export default function TaskManagement() {
   const formatDate = (date: string | null | undefined) =>
     date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
 
-  const getStatusColor = (s: string) => ({ completed: 'bg-green-100 text-green-800', in_progress: 'bg-blue-100 text-blue-800', blocked: 'bg-red-100 text-red-800' }[s] ?? 'bg-gray-100 text-gray-800');
-  const getPriorityColor = (p: string) => ({ urgent: 'bg-red-100 text-red-800', high: 'bg-orange-100 text-orange-800', medium: 'bg-yellow-100 text-yellow-800', low: 'bg-green-100 text-green-800' }[p] ?? 'bg-gray-100 text-gray-800');
+  const getStatusColor = (s: string) => ({ completed: 'bg-green-100 text-green-700', in_progress: 'bg-blue-100 text-blue-700', blocked: 'bg-red-100 text-red-700' }[s] ?? 'bg-gray-100 text-gray-700');
+  const getStatusDot = (s: string) => ({ completed: 'bg-green-500', in_progress: 'bg-blue-500', blocked: 'bg-red-500' }[s] ?? 'bg-gray-400');
+  const getPriorityColor = (p: string) => ({ urgent: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700', medium: 'bg-yellow-100 text-yellow-700', low: 'bg-green-100 text-green-700' }[p] ?? 'bg-gray-100 text-gray-700');
 
   const handleExport = async () => {
     try {
@@ -110,6 +120,23 @@ export default function TaskManagement() {
   };
 
   if (showForm) return <TaskForm task={editingTask} employees={employees} projects={projects} onClose={handleFormClose} />;
+  if (viewMode === 'board') return (
+    <div>
+      <div className="flex justify-between items-center mb-6 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Task Management</h2>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <div className="flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-lg p-0.5">
+            <button onClick={() => setViewMode('table')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-500 hover:text-gray-700 transition"><Table2 size={13} /> Table</button>
+            <button className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-white shadow-sm text-gray-800"><LayoutGrid size={13} /> Board</button>
+          </div>
+          <button onClick={() => setShowForm(true)} className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition flex items-center gap-1.5 text-sm">
+            <ListTodo size={16} /><span className="hidden sm:inline">New Task</span>
+          </button>
+        </div>
+      </div>
+      <TaskBoard tasks={tasks} employees={employees} projects={projects} onUpdate={fetchTasks} />
+    </div>
+  );
 
   return (
     <div>
@@ -129,6 +156,16 @@ export default function TaskManagement() {
             </>
           ) : (
             <>
+              <div className="flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-lg p-0.5">
+                <button onClick={() => setViewMode('table')}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition ${viewMode === 'table' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}>
+                  <Table2 size={13} /> Table
+                </button>
+                <button onClick={() => setViewMode('board')}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition text-gray-500 hover:text-gray-700`}>
+                  <LayoutGrid size={13} /> Board
+                </button>
+              </div>
               <button onClick={handleExport}
                 className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-1.5 border border-gray-200 text-sm">
                 <Download size={16} /><span className="hidden sm:inline">Export CSV</span>
@@ -176,8 +213,8 @@ export default function TaskManagement() {
       {errorMessage && <div className="mb-4 p-4 rounded border border-red-200 bg-red-50 text-red-700 text-sm">{errorMessage}</div>}
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-orange-600"></div>
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => <div key={i} className="skeleton h-14 rounded-xl" />)}
         </div>
       ) : tasks.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
@@ -208,9 +245,10 @@ export default function TaskManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {tasks.map(task => (
+                {tasks.map((task, i) => (
                   <tr key={task.task_id}
-                    className={`hover:bg-gray-50 ${selecting ? 'cursor-pointer' : ''} ${selectedIds.has(task.task_id) ? 'bg-orange-50' : ''}`}
+                    className={`hover:bg-gray-50 animate-row ${selecting ? 'cursor-pointer' : ''} ${selectedIds.has(task.task_id) ? 'bg-orange-50' : ''}`}
+                    style={{ animationDelay: `${i * 0.035}s` }}
                     onClick={selecting ? () => toggleSelect(task.task_id) : undefined}>
                     {selecting && (
                       <td className="px-4 py-4">
@@ -230,7 +268,10 @@ export default function TaskManagement() {
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(task.status)}`}>{task.status.replace('_', ' ')}</span>
+                      <span className={`px-2.5 py-0.5 inline-flex items-center gap-1.5 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>
+                        <span className={`badge-dot ${getStatusDot(task.status)}`} />
+                        {task.status.replace('_', ' ')}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(task.deadline)}</td>
                     {!selecting && (
@@ -248,11 +289,12 @@ export default function TaskManagement() {
 
           {/* Mobile cards */}
           <div className="md:hidden space-y-3">
-            {tasks.map(task => {
+            {tasks.map((task, i) => {
               const isSelected = selectedIds.has(task.task_id);
               return (
                 <div key={task.task_id}
-                  className={`bg-white rounded-xl shadow-sm border p-4 ${selecting ? 'cursor-pointer' : ''} ${isSelected ? 'border-orange-400 bg-orange-50' : 'border-gray-100'}`}
+                  className={`animate-row bg-white rounded-xl shadow-sm border p-4 ${selecting ? 'cursor-pointer' : ''} ${isSelected ? 'border-orange-400 bg-orange-50' : 'border-gray-100'}`}
+                  style={{ animationDelay: `${i * 0.045}s` }}
                   onClick={selecting ? () => toggleSelect(task.task_id) : undefined}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-start gap-2 flex-1 pr-2">

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api, type Employee } from '../lib/api';
-import { UserPlus, Calendar, Download, CheckSquare, X } from 'lucide-react';
+import { UserPlus, Calendar, Download, CheckSquare, X, Search } from 'lucide-react';
+import { useToast } from './Toast';
+import { useConfirm } from './ConfirmDialog';
 import EmployeeForm from './EmployeeForm';
 import AttendanceView from './AttendanceView';
 import Pagination from './Pagination';
@@ -18,6 +20,9 @@ export default function EmployeeManagement() {
   const [pages, setPages] = useState(1);
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [search, setSearch] = useState('');
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => { fetchEmployees(); }, [page, pageSize]);
 
@@ -39,9 +44,10 @@ export default function EmployeeManagement() {
   const handlePageSizeChange = (s: number) => { setPageSize(s); setPage(1); };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this employee?')) return;
-    try { await api.employees.delete(id); fetchEmployees(); }
-    catch { alert('Failed to delete employee'); }
+    const ok = await confirm({ title: 'Delete Employee', message: 'This will permanently remove the employee and all their data. This cannot be undone.', confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
+    try { await api.employees.delete(id); fetchEmployees(); toast.success('Employee deleted'); }
+    catch { toast.error('Failed to delete employee'); }
   };
 
   const handleEdit = (employee: Employee) => { setEditingEmployee(employee); setShowForm(true); };
@@ -65,12 +71,13 @@ export default function EmployeeManagement() {
 
   const handleDeleteSelected = async () => {
     if (!selectedIds.size) return;
-    if (!confirm(`Delete ${selectedIds.size} employee(s)? This cannot be undone.`)) return;
+    const ok = await confirm({ title: `Delete ${selectedIds.size} Employee(s)`, message: 'This will permanently remove all selected employees. This cannot be undone.', confirmLabel: 'Delete All', danger: true });
+    if (!ok) return;
     const results = await Promise.allSettled([...selectedIds].map(id => api.employees.delete(id)));
     const failed = results.filter(r => r.status === 'rejected').length;
-    if (failed) alert(`${failed} deletion(s) failed.`);
-    cancelSelect();
-    fetchEmployees();
+    if (failed) toast.error(`${failed} deletion(s) failed`);
+    else toast.success(`${selectedIds.size} employee(s) deleted`);
+    cancelSelect(); fetchEmployees();
   };
 
   const handleExport = async () => {
@@ -93,6 +100,14 @@ export default function EmployeeManagement() {
       downloadCsv('employees.csv', all, columns);
     } catch { alert('Failed to export employees'); }
   };
+
+  const filtered = employees.filter(e => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (e.employee_name?.toLowerCase().includes(q)) ||
+           (e.email?.toLowerCase().includes(q)) ||
+           (e.phone_no?.includes(q));
+  });
 
   if (viewingAttendance) return <AttendanceView employee={viewingAttendance} onClose={() => setViewingAttendance(null)} />;
   if (showForm) return <EmployeeForm employee={editingEmployee} onClose={handleFormClose} />;
@@ -132,11 +147,28 @@ export default function EmployeeManagement() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
+      {/* Search bar */}
+      {!selecting && (
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, email or phone…"
+            className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <X size={14} />
+            </button>
+          )}
         </div>
-      ) : employees.length === 0 ? (
+      )}
+
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => <div key={i} className="skeleton h-14 rounded-xl" />)}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <p className="text-gray-500">No employees found. Add your first employee to get started.</p>
         </div>
@@ -163,9 +195,10 @@ export default function EmployeeManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {employees.map((employee) => (
+                {filtered.map((employee, i) => (
                   <tr key={employee.employee_id}
-                    className={`hover:bg-gray-50 ${selecting ? 'cursor-pointer' : ''} ${selectedIds.has(employee.employee_id!) ? 'bg-blue-50' : ''}`}
+                    className={`hover:bg-gray-50 animate-row ${selecting ? 'cursor-pointer' : ''} ${selectedIds.has(employee.employee_id!) ? 'bg-blue-50' : ''}`}
+                    style={{ animationDelay: `${i * 0.035}s` }}
                     onClick={selecting ? () => toggleSelect(employee.employee_id!) : undefined}>
                     {selecting && (
                       <td className="px-4 py-4">
@@ -203,12 +236,13 @@ export default function EmployeeManagement() {
 
           {/* Mobile cards */}
           <div className="md:hidden space-y-3">
-            {employees.map((employee) => {
+            {filtered.map((employee, i) => {
               const gross = (employee.basic || 0) + (employee.da || 0) + (employee.hra || 0) + (employee.others || 0);
               const isSelected = selectedIds.has(employee.employee_id!);
               return (
                 <div key={employee.employee_id}
-                  className={`bg-white rounded-xl shadow-sm border p-4 ${selecting ? 'cursor-pointer' : ''} ${isSelected ? 'border-blue-400 bg-blue-50' : 'border-gray-100'}`}
+                  className={`animate-row bg-white rounded-xl shadow-sm border p-4 ${selecting ? 'cursor-pointer' : ''} ${isSelected ? 'border-blue-400 bg-blue-50' : 'border-gray-100'}`}
+                  style={{ animationDelay: `${i * 0.045}s` }}
                   onClick={selecting ? () => toggleSelect(employee.employee_id!) : undefined}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">

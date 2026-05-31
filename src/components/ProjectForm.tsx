@@ -1,198 +1,107 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, FolderKanban, Calendar } from 'lucide-react';
 import { api, type Project } from '../lib/api';
+import { useToast } from './Toast';
 
-interface ProjectFormProps {
-  project: Project | null;
-  onClose: () => void;
-}
+const INPUT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent focus:bg-white transition placeholder-slate-400';
+const LABEL = 'block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide';
+
+interface ProjectFormProps { project: Project | null; onClose: () => void; }
 
 export default function ProjectForm({ project, onClose }: ProjectFormProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    client_name: '',
-    address: '',
-    start_date: '',
-    completion_date: '',
-  });
+  const toast = useToast();
+  const [form, setForm] = useState({ name: '', client_name: '', address: '', start_date: '', completion_date: '' });
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (project) {
-      setFormData({
-        name: project.name,
-        client_name: project.client_name,
-        address: project.address,
-        start_date: project.start_date || '',
-        completion_date: project.completion_date || '',
-      });
+      setForm({ name: project.name, client_name: project.client_name, address: project.address, start_date: project.start_date || '', completion_date: project.completion_date || '' });
       setIsCompleted(!!project.completion_date);
-    } else {
-      setIsCompleted(false);
     }
   }, [project]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-
-    if (isCompleted && !formData.completion_date) {
-      alert('Please select a completion date or uncheck "Mark as completed".');
-      setLoading(false);
-      return;
-    }
-
-    const payload = {
-      name: formData.name.trim(),
-      client_name: formData.client_name.trim(),
-      address: formData.address.trim(),
-      start_date: formData.start_date,
-      completion_date: isCompleted ? formData.completion_date : null,
-    };
-
+    if (isCompleted && !form.completion_date) { setError('Select a completion date or uncheck "Mark as completed".'); return; }
+    setLoading(true); setError('');
+    const payload = { name: form.name.trim(), client_name: form.client_name.trim(), address: form.address.trim(), start_date: form.start_date, completion_date: isCompleted ? form.completion_date : null };
     try {
-    if (project) {
-        await api.projects.update(project.project_id, payload);
-      } else {
-        await api.projects.create(payload);
-      }
-        onClose();
-    } catch (error) {
-      console.error('Error saving project:', error);
-      alert(error instanceof Error ? error.message : 'Failed to save project');
+      if (project) await api.projects.update(project.project_id, payload);
+      else await api.projects.create(payload);
+      toast.success(project ? 'Project updated' : 'Project created');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save project');
     }
-
     setLoading(false);
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="flex justify-between items-center p-6 border-b">
-        <h2 className="text-2xl font-bold text-gray-800">
-          {project ? 'Edit Project' : 'Create New Project'}
-        </h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          <X size={24} />
-        </button>
+    <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/60 shadow-lg">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">{project ? 'Edit Project' : 'Create New Project'}</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Fill in the project details</p>
+        </div>
+        <button onClick={onClose} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition"><X size={16} /></button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Project Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Client Name
-          </label>
-          <input
-            type="text"
-            name="client_name"
-            value={formData.client_name}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Address
-          </label>
-          <textarea
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            rows={3}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <div className="h-6 w-6 rounded-lg bg-green-50 flex items-center justify-center"><FolderKanban size={14} className="text-green-600" /></div>
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Project Info</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Project Name <span className="text-red-400 normal-case tracking-normal">*</span></label>
+              <input name="name" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} required placeholder="Enter project name" className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Client Name <span className="text-red-400 normal-case tracking-normal">*</span></label>
+              <input name="client_name" value={form.client_name} onChange={e => setForm(f => ({...f, client_name: e.target.value}))} required placeholder="Client / company name" className={INPUT} />
+            </div>
+          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              name="start_date"
-              value={formData.start_date}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-            Completion Date
-            </label>
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="completed"
-              checked={isCompleted}
-              onChange={(e) => {
-                setIsCompleted(e.target.checked);
-                if (!e.target.checked) {
-                  setFormData((prev) => ({ ...prev, completion_date: '' }));
-                }
-              }}
-              className="h-4 w-4 text-green-600 border-gray-300 rounded"
-            />
-            <label htmlFor="completed" className="text-sm text-gray-700">
-              Mark as completed
-            </label>
-          </div>
-          {isCompleted && (
-            <input
-              type="date"
-              name="completion_date"
-              value={formData.completion_date}
-              onChange={handleChange}
-              className="mt-3 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          )}
+            <label className={LABEL}>Site Address <span className="text-red-400 normal-case tracking-normal">*</span></label>
+            <textarea name="address" value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} required rows={2} placeholder="Full site address" className={INPUT + ' resize-none'} />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : project ? 'Update Project' : 'Create Project'}
-          </button>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <div className="h-6 w-6 rounded-lg bg-green-50 flex items-center justify-center"><Calendar size={14} className="text-green-600" /></div>
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Timeline</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Start Date</label>
+              <input type="date" name="start_date" value={form.start_date} onChange={e => setForm(f => ({...f, start_date: e.target.value}))} className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Completion</label>
+              <label className="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="checkbox" checked={isCompleted} onChange={e => { setIsCompleted(e.target.checked); if (!e.target.checked) setForm(f => ({...f, completion_date: ''})); }}
+                  className="h-4 w-4 rounded text-green-600 border-slate-300" />
+                <span className="text-sm text-slate-600">Mark as completed</span>
+              </label>
+              {isCompleted && <input type="date" name="completion_date" value={form.completion_date} onChange={e => setForm(f => ({...f, completion_date: e.target.value}))} className={INPUT} />}
+            </div>
+          </div>
         </div>
       </form>
+
+      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
+        <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
+        <button onClick={handleSubmit as any} disabled={loading}
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition disabled:opacity-50">
+          {loading ? 'Saving…' : project ? 'Update Project' : 'Create Project'}
+        </button>
+      </div>
     </div>
   );
 }

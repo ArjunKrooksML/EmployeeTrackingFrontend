@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FolderPlus, Download, CheckSquare, X } from 'lucide-react';
+import { FolderPlus, Download, CheckSquare, X, Search } from 'lucide-react';
+import { useToast } from './Toast';
+import { useConfirm } from './ConfirmDialog';
 import ProjectForm from './ProjectForm';
 import { api, type Project } from '../lib/api';
 import Pagination from './Pagination';
@@ -17,6 +19,9 @@ export default function ProjectManagement() {
   const [pages, setPages] = useState(1);
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [search, setSearch] = useState('');
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => { fetchProjects(); }, [page, pageSize]);
 
@@ -36,9 +41,10 @@ export default function ProjectManagement() {
   const handleFormClose = () => { setShowForm(false); setEditingProject(null); fetchProjects(); };
 
   const handleDelete = async (project: Project) => {
-    if (!window.confirm(`Delete project "${project.name}"? This cannot be undone.`)) return;
-    try { await api.projects.delete(project.project_id); fetchProjects(); }
-    catch (err) { alert(err instanceof Error ? err.message : 'Failed to delete project'); }
+    const ok = await confirm({ title: 'Delete Project', message: `Delete "${project.name}"? Projects with existing tasks cannot be deleted.`, confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
+    try { await api.projects.delete(project.project_id); fetchProjects(); toast.success('Project deleted'); }
+    catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to delete project'); }
   };
 
   const toggleSelect = (id: number) => {
@@ -49,10 +55,12 @@ export default function ProjectManagement() {
 
   const handleDeleteSelected = async () => {
     if (!selectedIds.size) return;
-    if (!confirm(`Delete ${selectedIds.size} project(s)? This cannot be undone.`)) return;
+    const ok = await confirm({ title: `Delete ${selectedIds.size} Project(s)`, message: 'Projects with existing tasks cannot be deleted and will be skipped.', confirmLabel: 'Delete', danger: true });
+    if (!ok) return;
     const results = await Promise.allSettled([...selectedIds].map(id => api.projects.delete(id)));
     const failed = results.filter(r => r.status === 'rejected').length;
-    if (failed) alert(`${failed} deletion(s) failed. Projects with existing tasks cannot be deleted.`);
+    if (failed) toast.error(`${failed} project(s) could not be deleted (have existing tasks)`);
+    else toast.success(`${selectedIds.size} project(s) deleted`);
     cancelSelect(); fetchProjects();
   };
 
@@ -74,6 +82,12 @@ export default function ProjectManagement() {
 
   const formatDate = (date: string | null) =>
     date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+
+  const filtered = projects.filter(p => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return p.name?.toLowerCase().includes(q) || p.client_name?.toLowerCase().includes(q);
+  });
 
   if (showForm) return <ProjectForm project={editingProject} onClose={handleFormClose} />;
 
@@ -112,24 +126,36 @@ export default function ProjectManagement() {
         </div>
       </div>
 
+      {/* Search bar */}
+      {!selecting && (
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search by project or client name…"
+            className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition" />
+          {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={14} /></button>}
+        </div>
+      )}
+
       {errorMessage && <div className="mb-4 p-4 rounded border border-red-200 bg-red-50 text-red-700 text-sm">{errorMessage}</div>}
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-green-600"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => <div key={i} className="skeleton h-52 rounded-2xl" />)}
         </div>
-      ) : projects.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <p className="text-gray-500">No projects found. Create your first project to get started.</p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
-            {projects.map(project => {
+            {filtered.map((project, i) => {
               const isSelected = selectedIds.has(project.project_id);
               return (
                 <div key={project.project_id}
-                  className={`bg-white rounded-lg shadow p-6 transition ${selecting ? 'cursor-pointer hover:shadow-md' : 'hover:shadow-lg'} ${isSelected ? 'ring-2 ring-green-500 bg-green-50' : ''}`}
+                  className={`animate-row bg-white rounded-xl shadow-sm border border-slate-100 p-6 transition ${selecting ? 'cursor-pointer hover:shadow-md' : 'hover:-translate-y-0.5 hover:shadow-lg'} ${isSelected ? 'ring-2 ring-green-500 bg-green-50' : ''}`}
+                  style={{ animationDelay: `${i * 0.05}s` }}
                   onClick={selecting ? () => toggleSelect(project.project_id) : undefined}>
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-start gap-2 flex-1">

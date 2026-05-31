@@ -1,297 +1,183 @@
 import { useState, useEffect } from 'react';
 import { api, type Task, type Employee, type TaskPayload, type Project } from '../lib/api';
-import { X } from 'lucide-react';
+import { X, ListChecks, Users, Calendar, Tag } from 'lucide-react';
+import { useToast } from './Toast';
 
-interface TaskFormProps {
-  task: Task | null;
-  employees: Employee[];
-  projects: Project[];
-  onClose: () => void;
+const INPUT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent focus:bg-white transition placeholder-slate-400';
+const SELECT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent focus:bg-white transition';
+const LABEL = 'block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide';
+
+const TASK_TYPES = ['Tools', 'Coupler Supply', 'Machine Mobilization', 'Machine Demobilization', 'Samples Testing'];
+const TOOLS_TYPES = ['Chasers', 'Rebar Caps', 'Forging Dyes', 'Gloves', 'Hydraulic Oil', 'Miscellaneous'];
+
+interface TaskFormProps { task: Task | null; employees: Employee[]; projects: Project[]; onClose: () => void; }
+
+function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+        <div className="h-6 w-6 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">{icon}</div>
+        <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{title}</span>
+      </div>
+      {children}
+    </div>
+  );
 }
 
 export default function TaskForm({ task, employees, projects, onClose }: TaskFormProps) {
-  const TASK_TYPES = ['Tools', 'Coupler Supply', 'Machine Mobilization', 'Machine Demobilization', 'Samples Testing'];
-  const TOOLS_TYPES = ['Chasers', 'Rebar Caps', 'Forging Dyes', 'Gloves', 'Hydraulic Oil', 'Miscellaneous'];
-
-  const [formData, setFormData] = useState({
-    task_name: '',
-    description: '',
-    project_id: '',
-    assigned_to: '',
-    status: 'todo',
-    priority: 'medium',
-    start_date: '',
-    deadline: '',
-    task_type: '',
-    tools_type: '',
+  const toast = useToast();
+  const [form, setForm] = useState({
+    task_name: '', description: '', project_id: '', assigned_to: '',
+    status: 'todo', priority: 'medium', start_date: '', deadline: '',
+    task_type: '', tools_type: '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (task) {
-      setFormData({
-        task_name: task.task_name,
-        description: task.description || '',
-        project_id: task.project_id?.toString() || '',
-        assigned_to: task.assigned_to?.toString() || '',
-        status: task.status,
-        priority: task.priority,
-        start_date: task.start_date || '',
-        deadline: task.deadline || '',
-        task_type: task.task_type || '',
-        tools_type: task.tools_type || '',
+      setForm({
+        task_name: task.task_name, description: task.description || '',
+        project_id: task.project_id?.toString() || '', assigned_to: task.assigned_to?.toString() || '',
+        status: task.status, priority: task.priority, start_date: task.start_date || '',
+        deadline: task.deadline || '', task_type: task.task_type || '', tools_type: task.tools_type || '',
       });
     }
   }, [task]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    if (!formData.project_id) {
-      alert('Please select a project');
-      setLoading(false);
-      return;
-    }
-
-    const projectIdNumber = Number(formData.project_id);
-
-    const payload: TaskPayload = {
-      task_name: formData.task_name.trim(),
-      description: formData.description.trim() || null,
-      project_id: projectIdNumber,
-      assigned_to: formData.assigned_to ? Number(formData.assigned_to) : null,
-      status: formData.status,
-      priority: formData.priority,
-      start_date: formData.start_date || null,
-      deadline: formData.deadline || null,
-      iscompleted: formData.status === 'completed',
-      task_type: formData.task_type || null,
-      tools_type: formData.task_type === 'Tools' ? (formData.tools_type || null) : null,
-    };
-
-    try {
-    if (task) {
-        await api.tasks.update(task.task_id, payload);
-      } else {
-        await api.tasks.create(payload);
-      }
-        onClose();
-    } catch (error) {
-      console.error('Error saving task:', error);
-      alert(error instanceof Error ? error.message : 'Failed to save task');
-    }
-
-    setLoading(false);
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-      ...(name === 'task_type' && value !== 'Tools' ? { tools_type: '' } : {}),
-    }));
-  };
+    setForm(f => ({ ...f, [name]: value, ...(name === 'task_type' && value !== 'Tools' ? { tools_type: '' } : {}) }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.project_id) { toast.error('Please select a project'); return; }
+    setLoading(true);
+    const payload: TaskPayload = {
+      task_name: form.task_name.trim(), description: form.description.trim() || null,
+      project_id: Number(form.project_id), assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
+      status: form.status, priority: form.priority, start_date: form.start_date || null,
+      deadline: form.deadline || null, iscompleted: form.status === 'completed',
+      task_type: form.task_type || null, tools_type: form.task_type === 'Tools' ? (form.tools_type || null) : null,
+    };
+    try {
+      if (task) await api.tasks.update(task.task_id, payload);
+      else await api.tasks.create(payload);
+      toast.success(task ? 'Task updated' : 'Task created');
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save task');
+    }
+    setLoading(false);
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="flex justify-between items-center p-6 border-b">
-        <h2 className="text-2xl font-bold text-gray-800">
-          {task ? 'Edit Task' : 'Create New Task'}
-        </h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          <X size={24} />
-        </button>
+    <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/60 shadow-lg">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">{task ? 'Edit Task' : 'Create New Task'}</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Fill in the task details</p>
+        </div>
+        <button onClick={onClose} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition"><X size={16} /></button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Task Title
-          </label>
-          <input
-            type="text"
-            name="task_name"
-            value={formData.task_name}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+        {/* Task Details */}
+        <Section icon={<ListChecks size={14} />} title="Task Details">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Task Type
-            </label>
-            <select
-              name="task_type"
-              value={formData.task_type}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="">Select type</option>
-              {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <label className={LABEL}>Task Title <span className="text-red-400 normal-case tracking-normal">*</span></label>
+            <input name="task_name" value={form.task_name} onChange={handleChange} required placeholder="What needs to be done?" className={INPUT} />
           </div>
-
-          {formData.task_type === 'Tools' && (
+          <div>
+            <label className={LABEL}>Description</label>
+            <textarea name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Optional details…" className={INPUT + ' resize-none'} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tools Type
-              </label>
-              <select
-                name="tools_type"
-                value={formData.tools_type}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Select tool</option>
-                {TOOLS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              <label className={LABEL}>Task Type</label>
+              <select name="task_type" value={form.task_type} onChange={handleChange} className={SELECT}>
+                <option value="">Select type</option>
+                {TASK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Project
-            </label>
-            <select
-              name="project_id"
-              value={formData.project_id}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="">Select project</option>
-              {projects.map((project) => (
-                <option key={project.project_id} value={project.project_id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+            {form.task_type === 'Tools' && (
+              <div>
+                <label className={LABEL}>Tools Type</label>
+                <select name="tools_type" value={form.tools_type} onChange={handleChange} className={SELECT}>
+                  <option value="">Select tool</option>
+                  {TOOLS_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            )}
           </div>
+        </Section>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assign To
-            </label>
-            <select
-              name="assigned_to"
-              value={formData.assigned_to}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="">Unassigned</option>
-              {employees.map((employee) => (
-                <option
-                  key={employee.employee_id}
-                  value={employee.employee_id?.toString() ?? ''}
-                >
-                  {employee.employee_name}
-                </option>
-              ))}
-            </select>
+        {/* Assignment */}
+        <Section icon={<Users size={14} />} title="Assignment">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Project <span className="text-red-400 normal-case tracking-normal">*</span></label>
+              <select name="project_id" value={form.project_id} onChange={handleChange} required className={SELECT}>
+                <option value="">Select project</option>
+                {projects.map(p => <option key={p.project_id} value={p.project_id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={LABEL}>Assign To</label>
+              <select name="assigned_to" value={form.assigned_to} onChange={handleChange} className={SELECT}>
+                <option value="">Unassigned</option>
+                {employees.map(e => <option key={e.employee_id} value={e.employee_id ?? ''}>{e.employee_name}</option>)}
+              </select>
+            </div>
           </div>
-        </div>
+        </Section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Priority
-            </label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+        {/* Status & Priority */}
+        <Section icon={<Tag size={14} />} title="Status & Priority">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Priority</label>
+              <select name="priority" value={form.priority} onChange={handleChange} className={SELECT}>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+            <div>
+              <label className={LABEL}>Status</label>
+              <select name="status" value={form.status} onChange={handleChange} className={SELECT}>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
           </div>
+        </Section>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="todo">To Do</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="blocked">Blocked</option>
-            </select>
+        {/* Timeline */}
+        <Section icon={<Calendar size={14} />} title="Timeline">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Start Date</label>
+              <input type="date" name="start_date" value={form.start_date} onChange={handleChange} className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Deadline</label>
+              <input type="date" name="deadline" value={form.deadline} onChange={handleChange} className={INPUT} />
+            </div>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Start Date
-          </label>
-          <input
-            type="date"
-            name="start_date"
-            value={formData.start_date}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Deadline
-          </label>
-          <input
-            type="date"
-            name="deadline"
-            value={formData.deadline}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : task ? 'Update Task' : 'Create Task'}
-          </button>
-        </div>
+        </Section>
       </form>
+
+      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
+        <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition">Cancel</button>
+        <button onClick={handleSubmit as any} disabled={loading}
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-xl transition disabled:opacity-50">
+          {loading ? 'Saving…' : task ? 'Update Task' : 'Create Task'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -81,35 +81,40 @@ export default function NotificationBell() {
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute right-0 mt-2 w-80 bg-white/90 backdrop-blur-xl border border-white/60 rounded-2xl shadow-2xl shadow-black/15 overflow-hidden z-50"
+            className="absolute right-0 mt-2 w-96 bg-white/90 backdrop-blur-xl border border-white/60 rounded-2xl shadow-2xl shadow-black/15 overflow-hidden z-50"
             initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0,  scale: 1    }}
             exit={{    opacity: 0, y: -8, scale: 0.95 }}
             transition={{ type: 'spring', bounce: 0.2, duration: 0.3 }}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-              <span className="text-sm font-bold text-slate-800">Notifications</span>
-              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 transition"><X size={15} /></button>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <span className="text-sm font-bold text-slate-800">Notifications</span>
+                {items.length > 0 && (
+                  <span className="ml-2 text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">{items.length}</span>
+                )}
+              </div>
+              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg hover:bg-slate-100"><X size={15} /></button>
             </div>
 
             {items.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-10 text-slate-400">
-                <Bell size={28} className="opacity-30" />
-                <p className="text-sm">All caught up!</p>
+              <div className="flex flex-col items-center gap-3 py-14 text-slate-400">
+                <Bell size={32} className="opacity-25" />
+                <p className="text-sm font-medium">All caught up!</p>
               </div>
             ) : (
-              <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                 {items.map(item => (
-                  <div key={item.id} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition">
-                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  <div key={item.id} className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50/80 transition">
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
                       item.type === 'task' ? 'bg-orange-100' : 'bg-violet-100'}`}>
                       {item.type === 'task'
-                        ? <AlertCircle size={15} className="text-orange-500" />
-                        : <CalendarDays size={15} className="text-violet-500" />}
+                        ? <AlertCircle size={17} className="text-orange-500" />
+                        : <CalendarDays size={17} className="text-violet-500" />}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{item.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.sub}</p>
+                    <div className="flex-1 min-w-0 py-0.5">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{item.title}</p>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.sub}</p>
                     </div>
                   </div>
                 ))}

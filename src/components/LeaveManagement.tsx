@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { api, type Leave } from '../lib/api';
 import { Calendar as CalendarIcon, Clock, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { useToast } from './Toast';
 import Pagination from './Pagination';
 
 export default function LeaveManagement() {
+  const toast = useToast();
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
@@ -37,7 +39,7 @@ export default function LeaveManagement() {
       setPages(data.pages);
     } catch (error: any) {
       console.error('Error fetching leaves:', error);
-      alert('Failed to fetch leaves: ' + error.message);
+      toast.error('Failed to fetch leaves: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +59,7 @@ export default function LeaveManagement() {
       await api.leaves.updateStatus(id, status);
       fetchLeaves();
     } catch (error: any) {
-      alert('Failed to update status: ' + error.message);
+      toast.error('Failed to update status: ' + error.message);
     } finally {
       setUpdatingId(null);
     }

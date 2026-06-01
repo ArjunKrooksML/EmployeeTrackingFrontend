@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api, type Attendance } from '../lib/api';
 import { Download, MapPin } from 'lucide-react';
+import { useToast } from './Toast';
 import Pagination from './Pagination';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
 type AttRow = Attendance & { employee_name?: string };
 
 export default function AttendanceManagement() {
+  const toast = useToast();
   const [attendance, setAttendance] = useState<AttRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
@@ -28,7 +30,7 @@ export default function AttendanceManagement() {
       setPages(data.pages);
     } catch (error) {
       console.error('Error fetching attendance:', error);
-      alert('Failed to fetch attendance');
+      toast.error('Failed to fetch attendance');
     } finally {
       setLoading(false);
     }
@@ -43,7 +45,7 @@ export default function AttendanceManagement() {
       const updated = await api.attendance.update(id, status);
       setAttendance(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r));
     } catch (e: any) {
-      alert(e?.message || 'Failed to update attendance');
+      toast.error(e?.message || 'Failed to update attendance');
     } finally {
       setUpdating(null);
     }
@@ -53,7 +55,7 @@ export default function AttendanceManagement() {
     try {
       const data = await api.attendance.getAll(1, 10000);
       const all = data.items as AttRow[];
-      if (all.length === 0) { alert('No attendance records to export.'); return; }
+      if (all.length === 0) { toast.warning('No attendance records to export.'); return; }
       const columns: CsvColumn<AttRow>[] = [
         { key: 'id', header: 'ID' },
         { key: 'employee_id', header: 'Employee ID' },
@@ -65,7 +67,7 @@ export default function AttendanceManagement() {
       ];
       downloadCsv('attendance.csv', all, columns);
     } catch {
-      alert('Failed to export attendance');
+      toast.error('Failed to export attendance');
     }
   };
 

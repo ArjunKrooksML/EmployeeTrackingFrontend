@@ -67,7 +67,7 @@ export default function ProjectManagement() {
   const handleExport = async () => {
     try {
       const data = await api.projects.getAll(1, 10000);
-      if (!data.items.length) { alert('No projects to export yet.'); return; }
+      if (!data.items.length) { toast.warning('No projects to export yet.'); return; }
       const columns: CsvColumn<Project>[] = [
         { key: 'project_id', header: 'Project ID' },
         { key: 'name', header: 'Project Name' },
@@ -77,7 +77,7 @@ export default function ProjectManagement() {
         { key: 'completion_date', header: 'Completion Date', formatter: (_, r) => r.completion_date ?? '' },
       ];
       downloadCsv('projects.csv', data.items, columns);
-    } catch { alert('Failed to export projects'); }
+    } catch { toast.error('Failed to export projects'); }
   };
 
   const formatDate = (date: string | null) =>

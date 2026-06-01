@@ -84,7 +84,7 @@ export default function EmployeeManagement() {
     try {
       const data = await api.employees.getAll(1, 10000);
       const all = data.items;
-      if (all.length === 0) { alert('No employees to export yet.'); return; }
+      if (all.length === 0) { toast.warning('No employees to export yet.'); return; }
       const columns: CsvColumn<Employee>[] = [
         { key: 'employee_id', header: 'ID' },
         { key: 'employee_name', header: 'Name' },
@@ -98,7 +98,7 @@ export default function EmployeeManagement() {
         { key: 'updated_at', header: 'Updated At', formatter: (_, row) => row.updated_at ?? '' },
       ];
       downloadCsv('employees.csv', all, columns);
-    } catch { alert('Failed to export employees'); }
+    } catch { toast.error('Failed to export employees'); }
   };
 
   const filtered = employees.filter(e => {

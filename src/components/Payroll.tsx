@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, type SalaryResult } from '../lib/api';
 import { Save, RefreshCw, FileDown } from 'lucide-react';
+import { useToast } from './Toast';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PayslipPDF from './PayslipPDF';
 
@@ -11,6 +12,7 @@ function fmt(n: number) {
 }
 
 export default function Payroll() {
+  const toast = useToast();
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
@@ -31,7 +33,7 @@ export default function Payroll() {
       data.forEach(r => { adv[r.employee_id] = String(r.advance_deduction); });
       setAdvances(adv);
     } catch (e: any) {
-      alert(e.message || 'Failed to compute');
+      toast.error(e.message || 'Failed to compute');
     } finally {
       setLoading(false);
     }
@@ -43,7 +45,7 @@ export default function Payroll() {
       await api.salary.saveOne(r.employee_id, month, year, parseFloat(advances[r.employee_id] || '0') || 0);
       setSavedIds(prev => new Set(prev).add(r.employee_id));
     } catch (e: any) {
-      alert(e.message || 'Failed to save');
+      toast.error(e.message || 'Failed to save');
     } finally {
       setSaving(null);
     }

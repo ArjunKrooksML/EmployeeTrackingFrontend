@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api, type Employee, type Attendance } from '../lib/api';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
+import { useToast } from './Toast';
 
 interface AttendanceViewProps {
   employee: Employee;
@@ -8,6 +9,7 @@ interface AttendanceViewProps {
 }
 
 export default function AttendanceView({ employee, onClose }: AttendanceViewProps) {
+  const toast = useToast();
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<number | null>(null);
@@ -39,7 +41,7 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
       setAttendance(prev => prev.map(a => a.id === attendanceId ? { ...a, attendance: newStatus as any } : a));
     } catch (err) {
       console.error(err);
-      alert('Failed to update status');
+      toast.error('Failed to update status');
     } finally {
       setUpdating(null);
     }

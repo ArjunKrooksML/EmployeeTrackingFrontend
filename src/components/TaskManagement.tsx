@@ -101,7 +101,7 @@ export default function TaskManagement() {
   const handleExport = async () => {
     try {
       const res = await api.tasks.getAll(1, 10000, filterStatus || undefined, filterPriority || undefined);
-      if (!res.items.length) { alert('No tasks to export yet.'); return; }
+      if (!res.items.length) { toast.warning('No tasks to export yet.'); return; }
       const columns: CsvColumn<Task>[] = [
         { key: 'task_id', header: 'Task ID' },
         { key: 'task_name', header: 'Task Name' },
@@ -116,7 +116,7 @@ export default function TaskManagement() {
         { key: 'created', header: 'Created At', formatter: (_, r) => r.created ?? '' },
       ];
       downloadCsv('tasks.csv', res.items, columns);
-    } catch { alert('Failed to export tasks'); }
+    } catch { toast.error('Failed to export tasks'); }
   };
 
   if (showForm) return <TaskForm task={editingTask} employees={employees} projects={projects} onClose={handleFormClose} />;

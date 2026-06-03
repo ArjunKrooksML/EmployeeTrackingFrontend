@@ -342,7 +342,7 @@ export default function OrdersView() {
         <SODetail
           so={selectedSO}
           po={poMap.get(selectedSO.po_id) ?? null}
-          projectName={getSoProjName(selectedSO)}
+          projectName={getSoProjName(selectedSO) ?? null}
           onClose={() => setSelectedSO(null)}
         />
       )}

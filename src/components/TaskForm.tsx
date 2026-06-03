@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api, type Task, type Employee, type TaskPayload, type Project } from '../lib/api';
 import { X, ListChecks, Users, Calendar, Tag } from 'lucide-react';
 import { useToast } from './Toast';
+import ProjectSearch from './ProjectSearch';
 
 const INPUT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent focus:bg-white transition placeholder-slate-400';
 const SELECT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent focus:bg-white transition';
@@ -117,10 +118,12 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={LABEL}>Project <span className="text-red-400 normal-case tracking-normal">*</span></label>
-              <select name="project_id" value={form.project_id} onChange={handleChange} required className={SELECT}>
-                <option value="">Select project</option>
-                {projects.map(p => <option key={p.project_id} value={p.project_id}>{p.name}</option>)}
-              </select>
+              <ProjectSearch
+                projects={projects}
+                value={form.project_id ? Number(form.project_id) : null}
+                onChange={p => setForm(f => ({ ...f, project_id: p ? String(p.project_id) : '' }))}
+                placeholder="Search projects…"
+              />
             </div>
             <div>
               <label className={LABEL}>Assign To</label>

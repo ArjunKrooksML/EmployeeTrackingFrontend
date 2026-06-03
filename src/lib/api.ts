@@ -57,7 +57,29 @@ export interface Project {
   address: string;
   start_date: string;
   completion_date?: string | null;
+  po_prefix?: string | null;
 }
+
+export interface POItem { id: number; size: string; quantity: number; }
+export interface PurchaseOrder {
+  id: number;
+  po_number: string;
+  project_id?: number | null;
+  project_name?: string | null;
+  created_at: string;
+  items: POItem[];
+}
+export interface SOItem { id: number; size: string; supplied_qty: number; balance_qty: number; }
+export interface SupplyOrder {
+  id: number;
+  po_id: number;
+  po_number: string;
+  invoice_number?: string | null;
+  project_name?: string | null;
+  created_at: string;
+  items: SOItem[];
+}
+export interface POSizeSummary { size: string; po_qty: number; total_supplied: number; balance: number; }
 
 export interface Task {
   task_id: number;
@@ -364,6 +386,24 @@ export const api = {
         body: JSON.stringify({ status }),
       });
     },
+  },
+  orders: {
+    listPOs: (): Promise<PurchaseOrder[]> => apiRequest('/orders/po'),
+    createPO: (data: { po_number: string; project_id?: number | null; items: { size: string; quantity: number }[] }): Promise<PurchaseOrder> =>
+      apiRequest('/orders/po', { method: 'POST', body: JSON.stringify(data) }),
+    updatePO: (id: number, data: { po_number: string; project_id?: number | null; items: { size: string; quantity: number }[] }): Promise<PurchaseOrder> =>
+      apiRequest(`/orders/po/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deletePO: (id: number): Promise<void> => apiRequest(`/orders/po/${id}`, { method: 'DELETE' }),
+    getPOsByProject: (projectId: number): Promise<PurchaseOrder[]> => apiRequest(`/orders/po/by-project/${projectId}`),
+    getStandalonePOs: (): Promise<PurchaseOrder[]> => apiRequest('/orders/po/standalone'),
+    getPOSummary: (poId: number, excludeSo?: number): Promise<POSizeSummary[]> =>
+      apiRequest(`/orders/po/${poId}/summary${excludeSo ? `?exclude_so=${excludeSo}` : ''}`),
+    listSOs: (): Promise<SupplyOrder[]> => apiRequest('/orders/so'),
+    createSO: (data: { po_id: number; invoice_number?: string | null; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
+      apiRequest('/orders/so', { method: 'POST', body: JSON.stringify(data) }),
+    updateSO: (id: number, data: { po_id: number; invoice_number?: string | null; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
+      apiRequest(`/orders/so/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteSO: (id: number): Promise<void> => apiRequest(`/orders/so/${id}`, { method: 'DELETE' }),
   },
   salary: {
     computeAll: async (month: number, year: number): Promise<SalaryResult[]> =>

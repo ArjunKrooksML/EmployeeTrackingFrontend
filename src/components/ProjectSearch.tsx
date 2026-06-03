@@ -93,10 +93,10 @@ export default function ProjectSearch({ projects, value, onChange, placeholder =
                 <button key={p.project_id} type="button"
                   onMouseDown={e => e.preventDefault()}
                   onClick={() => select(p)}
-                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition flex items-center justify-between gap-3 border-b border-slate-50 last:border-0"
+                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition flex flex-col gap-0.5 border-b border-slate-50 last:border-0"
                 >
-                  <span className="text-sm font-medium text-slate-800 truncate">{p.name}</span>
-                  <span className="text-xs text-slate-400 shrink-0">{p.client_name}</span>
+                  <span className="text-sm font-medium text-slate-800 leading-snug">{p.name}</span>
+                  {p.client_name && <span className="text-xs text-slate-400">{p.client_name}</span>}
                 </button>
               ))
             )}

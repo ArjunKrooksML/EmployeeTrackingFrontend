@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu, Package } from 'lucide-react';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import NotificationBell from './components/NotificationBell';
@@ -11,11 +11,12 @@ import AttendanceManagement from './components/AttendanceManagement';
 import LeaveManagement from './components/LeaveManagement';
 import AdminDashboard from './components/AdminDashboard';
 import Payroll from './components/Payroll';
+import OrdersView from './components/OrdersView';
 import Login from './components/Login';
 import type { AdminUser } from './lib/api';
 import ChangePasswordModal from './components/ChangePasswordModal';
 
-type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll';
+type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders';
 type UserT = AdminUser;
 
 const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
@@ -26,6 +27,7 @@ const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
   { key: 'attendance', icon: <Calendar size={20} />, label: 'Attendance' },
   { key: 'leaves', icon: <Briefcase size={20} />, label: 'Leaves' },
   { key: 'payroll', icon: <Wallet size={20} />, label: 'Payroll' },
+  { key: 'orders', icon: <Package size={20} />, label: 'Orders' },
 ];
 
 function App() {
@@ -208,6 +210,7 @@ function App() {
               {tab === 'attendance' && <AttendanceManagement />}
               {tab === 'leaves' && <LeaveManagement />}
               {tab === 'payroll' && <Payroll />}
+              {tab === 'orders' && <OrdersView />}
             </motion.div>
           </AnimatePresence>
         </main>

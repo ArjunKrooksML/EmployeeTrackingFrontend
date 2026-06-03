@@ -10,14 +10,14 @@ interface ProjectFormProps { project: Project | null; onClose: () => void; }
 
 export default function ProjectForm({ project, onClose }: ProjectFormProps) {
   const toast = useToast();
-  const [form, setForm] = useState({ name: '', client_name: '', address: '', start_date: '', completion_date: '' });
+  const [form, setForm] = useState({ name: '', client_name: '', address: '', start_date: '', completion_date: '', po_prefix: '' });
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (project) {
-      setForm({ name: project.name, client_name: project.client_name, address: project.address, start_date: project.start_date || '', completion_date: project.completion_date || '' });
+      setForm({ name: project.name, client_name: project.client_name, address: project.address, start_date: project.start_date || '', completion_date: project.completion_date || '', po_prefix: project.po_prefix || '' });
       setIsCompleted(!!project.completion_date);
     }
   }, [project]);
@@ -26,7 +26,7 @@ export default function ProjectForm({ project, onClose }: ProjectFormProps) {
     e.preventDefault();
     if (isCompleted && !form.completion_date) { setError('Select a completion date or uncheck "Mark as completed".'); return; }
     setLoading(true); setError('');
-    const payload = { name: form.name.trim(), client_name: form.client_name.trim(), address: form.address.trim(), start_date: form.start_date, completion_date: isCompleted ? form.completion_date : null };
+    const payload = { name: form.name.trim(), client_name: form.client_name.trim(), address: form.address.trim(), start_date: form.start_date, completion_date: isCompleted ? form.completion_date : null, po_prefix: form.po_prefix.trim() || null };
     try {
       if (project) await api.projects.update(project.project_id, payload);
       else await api.projects.create(payload);
@@ -64,6 +64,10 @@ export default function ProjectForm({ project, onClose }: ProjectFormProps) {
             <div>
               <label className={LABEL}>Client Name <span className="text-red-400 normal-case tracking-normal">*</span></label>
               <input name="client_name" value={form.client_name} onChange={e => setForm(f => ({...f, client_name: e.target.value}))} required placeholder="Client / company name" className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>PO Prefix <span className="text-slate-400 normal-case font-normal tracking-normal">(optional)</span></label>
+              <input name="po_prefix" value={form.po_prefix} onChange={e => setForm(f => ({...f, po_prefix: e.target.value}))} placeholder="e.g. SVAAS-P1" className={INPUT} />
             </div>
           </div>
           <div>

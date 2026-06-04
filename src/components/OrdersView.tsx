@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, FileText, Truck, Search, X, Pencil, Trash2, BarChart2 } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { Plus, FileText, Truck, Search, X, Pencil, Trash2, BarChart2, Eye } from 'lucide-react';
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { api, type Project, type PurchaseOrder, type SupplyOrder } from '../lib/api';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmDialog';
@@ -37,6 +37,7 @@ export default function OrdersView() {
   const [selectedSO, setSelectedSO] = useState<SupplyOrder | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [summaryProject, setSummaryProject] = useState<Project | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
 
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState(defaultFrom());
@@ -383,21 +384,40 @@ export default function OrdersView() {
               const projPOs = pos.filter(po => po.project_id === summaryProject.project_id);
               const projSOIds = new Set(projPOs.map(po => po.id));
               const projSOs = sos.filter(so => projSOIds.has(so.po_id));
+              async function openPDF() {
+                setViewLoading(true);
+                try {
+                  const blob = await pdf(<ProjectSummaryPDF project={summaryProject!} pos={projPOs} sos={projSOs} />).toBlob();
+                  window.open(URL.createObjectURL(blob), '_blank');
+                } finally { setViewLoading(false); }
+              }
               return (
-                <PDFDownloadLink
-                  document={<ProjectSummaryPDF project={summaryProject} pos={projPOs} sos={projSOs} />}
-                  fileName={`project-summary-${summaryProject.name.replace(/\s+/g, '-')}.pdf`}
-                >
-                  {({ loading }) => (
-                    <button
-                      disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition disabled:opacity-50"
+                <div className="flex gap-2">
+                  <button
+                    onClick={openPDF}
+                    disabled={viewLoading}
+                    className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition disabled:opacity-50"
+                  >
+                    <Eye size={15} />
+                    {viewLoading ? 'Opening…' : 'View PDF'}
+                  </button>
+                  <div className="flex-1">
+                    <PDFDownloadLink
+                      document={<ProjectSummaryPDF project={summaryProject} pos={projPOs} sos={projSOs} />}
+                      fileName={`project-summary-${summaryProject.name.replace(/\s+/g, '-')}.pdf`}
                     >
-                      <FileText size={15} />
-                      {loading ? 'Preparing PDF…' : 'Download PDF'}
-                    </button>
-                  )}
-                </PDFDownloadLink>
+                      {({ loading }) => (
+                        <button
+                          disabled={loading}
+                          className="w-full flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition disabled:opacity-50"
+                        >
+                          <FileText size={15} />
+                          {loading ? 'Preparing…' : 'Download PDF'}
+                        </button>
+                      )}
+                    </PDFDownloadLink>
+                  </div>
+                </div>
               );
             })()}
           </div>

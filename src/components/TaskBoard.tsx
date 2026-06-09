@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { fmtLabel } from '../utils/format';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core';
 import { api, type Task, type Employee, type Project } from '../lib/api';
 import { useToast } from './Toast';
@@ -35,7 +36,7 @@ function TaskCard({ task, empName, projName, overlay }: { task: Task; empName: s
       <p className="text-sm font-semibold text-slate-800 leading-tight mb-2">{task.task_name}</p>
       {task.description && <p className="text-xs text-slate-400 mb-2 line-clamp-2">{task.description}</p>}
       <div className="flex flex-wrap gap-1 mb-2">
-        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${PRIO_COLORS[task.priority] ?? 'bg-gray-100 text-gray-600'}`}>{task.priority}</span>
+        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${PRIO_COLORS[task.priority] ?? 'bg-gray-100 text-gray-600'}`}>{fmtLabel(task.priority)}</span>
         {task.deadline && <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Due {task.deadline}</span>}
       </div>
       <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 pt-2">

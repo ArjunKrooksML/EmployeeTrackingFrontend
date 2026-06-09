@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { api, type Employee, type Task, type Attendance, type Leave, type Project } from '../lib/api';
+import { fmtLabel } from '../utils/format';
 import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
 import { Users, Briefcase, ListChecks, CalendarDays, UserPlus, FileText } from 'lucide-react';
@@ -214,7 +215,7 @@ export default function AdminDashboard() {
           icon: <ListChecks size={14} className="text-indigo-500" />,
           dot: 'bg-indigo-500',
           title: t.task_name,
-          sub: `Task · ${t.status.replace('_', ' ')} · ${t.priority}`,
+          sub: `Task · ${fmtLabel(t.status)} · ${fmtLabel(t.priority)}`,
           time: t.created ?? '',
         }));
         leaves.slice(0, 3).forEach(l => events.push({
@@ -222,7 +223,7 @@ export default function AdminDashboard() {
           icon: <FileText size={14} className="text-violet-500" />,
           dot: 'bg-violet-500',
           title: 'Leave request submitted',
-          sub: `${l.status} · ${l.leave_date ?? ''}`,
+          sub: `${fmtLabel(l.status)} · ${l.leave_date ?? ''}`,
           time: l.leave_date ?? '',
         }));
         employees.slice(0, 2).forEach(e => events.push({

@@ -5,6 +5,7 @@ import { useToast } from './Toast';
 import { useConfirm } from './ConfirmDialog';
 import EmployeeForm from './EmployeeForm';
 import AttendanceView from './AttendanceView';
+import EmployeeOverview from './EmployeeOverview';
 import Pagination from './Pagination';
 import { downloadCsv, type CsvColumn } from '../utils/csv';
 
@@ -21,6 +22,7 @@ export default function EmployeeManagement() {
   const [selecting, setSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -112,6 +114,7 @@ export default function EmployeeManagement() {
   if (viewingAttendance) return <AttendanceView employee={viewingAttendance} onClose={() => setViewingAttendance(null)} />;
   if (showForm) return <EmployeeForm employee={editingEmployee} onClose={handleFormClose} />;
 
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6 gap-2">
@@ -197,9 +200,9 @@ export default function EmployeeManagement() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filtered.map((employee, i) => (
                   <tr key={employee.employee_id}
-                    className={`hover:bg-gray-50 animate-row ${selecting ? 'cursor-pointer' : ''} ${selectedIds.has(employee.employee_id!) ? 'bg-blue-50' : ''}`}
+                    className={`hover:bg-gray-50 animate-row cursor-pointer ${selectedIds.has(employee.employee_id!) ? 'bg-blue-50' : ''}`}
                     style={{ animationDelay: `${i * 0.035}s` }}
-                    onClick={selecting ? () => toggleSelect(employee.employee_id!) : undefined}>
+                    onClick={selecting ? () => toggleSelect(employee.employee_id!) : () => setViewingEmployee(employee)}>
                     {selecting && (
                       <td className="px-4 py-4">
                         <input type="checkbox" checked={selectedIds.has(employee.employee_id!)}
@@ -222,9 +225,9 @@ export default function EmployeeManagement() {
                     </td>
                     {!selecting && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onClick={() => handleViewAttendance(employee)} className="text-blue-600 hover:text-blue-900 mr-4" title="View Attendance"><Calendar size={18} /></button>
-                        <button onClick={() => handleEdit(employee)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-                        <button onClick={() => handleDelete(employee.employee_id!)} className="text-red-600 hover:text-red-900">Delete</button>
+                        <button onClick={e => { e.stopPropagation(); handleViewAttendance(employee); }} className="text-blue-600 hover:text-blue-900 mr-4" title="View Attendance"><Calendar size={18} /></button>
+                        <button onClick={e => { e.stopPropagation(); handleEdit(employee); }} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+                        <button onClick={e => { e.stopPropagation(); handleDelete(employee.employee_id!); }} className="text-red-600 hover:text-red-900">Delete</button>
                       </td>
                     )}
                   </tr>
@@ -241,9 +244,9 @@ export default function EmployeeManagement() {
               const isSelected = selectedIds.has(employee.employee_id!);
               return (
                 <div key={employee.employee_id}
-                  className={`animate-row bg-white rounded-xl shadow-sm border p-4 ${selecting ? 'cursor-pointer' : ''} ${isSelected ? 'border-blue-400 bg-blue-50' : 'border-gray-100'}`}
+                  className={`animate-row bg-white rounded-xl shadow-sm border p-4 cursor-pointer ${isSelected ? 'border-blue-400 bg-blue-50' : 'border-gray-100'}`}
                   style={{ animationDelay: `${i * 0.045}s` }}
-                  onClick={selecting ? () => toggleSelect(employee.employee_id!) : undefined}>
+                  onClick={selecting ? () => toggleSelect(employee.employee_id!) : () => setViewingEmployee(employee)}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
                       {selecting && (
@@ -262,11 +265,11 @@ export default function EmployeeManagement() {
                   <p className="text-xs text-gray-500 mb-3">Joined: {employee.year_joined || 'N/A'}</p>
                   {!selecting && (
                     <div className="flex gap-2 pt-2 border-t border-gray-100">
-                      <button onClick={() => handleViewAttendance(employee)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                      <button onClick={e => { e.stopPropagation(); handleViewAttendance(employee); }} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
                         <Calendar size={13} /> Attendance
                       </button>
-                      <button onClick={() => handleEdit(employee)} className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">Edit</button>
-                      <button onClick={() => handleDelete(employee.employee_id!)} className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 ml-auto">Delete</button>
+                      <button onClick={e => { e.stopPropagation(); handleEdit(employee); }} className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">Edit</button>
+                      <button onClick={e => { e.stopPropagation(); handleDelete(employee.employee_id!); }} className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 ml-auto">Delete</button>
                     </div>
                   )}
                 </div>
@@ -276,6 +279,7 @@ export default function EmployeeManagement() {
           </div>
         </div>
       )}
+      {viewingEmployee && <EmployeeOverview employee={viewingEmployee} onClose={() => setViewingEmployee(null)} />}
     </div>
   );
 }

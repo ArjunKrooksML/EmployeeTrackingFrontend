@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, type Task, type Employee, type Project } from '../lib/api';
+import { fmtLabel } from '../utils/format';
 import { ListTodo, Download, CheckSquare, X, LayoutGrid, Table2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { useConfirm } from './ConfirmDialog';
@@ -265,12 +266,12 @@ export default function TaskManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getProjectName(task.project_id)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getEmployeeName(task.assigned_to)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityColor(task.priority)}`}>{fmtLabel(task.priority)}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2.5 py-0.5 inline-flex items-center gap-1.5 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>
                         <span className={`badge-dot ${getStatusDot(task.status)}`} />
-                        {task.status.replace('_', ' ')}
+                        {fmtLabel(task.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(task.deadline)}</td>
@@ -307,8 +308,8 @@ export default function TaskManagement() {
                       <p className="font-semibold text-gray-900 text-sm">{task.task_name}</p>
                     </div>
                     <div className="flex gap-1.5 flex-shrink-0">
-                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
-                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>{task.status.replace('_', ' ')}</span>
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>{fmtLabel(task.priority)}</span>
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}>{fmtLabel(task.status)}</span>
                     </div>
                   </div>
                   {task.description && <p className="text-xs text-gray-500 mb-2 line-clamp-2">{task.description}</p>}

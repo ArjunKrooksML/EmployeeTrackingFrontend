@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, type Leave } from '../lib/api';
+import { fmtLabel } from '../utils/format';
 import { Calendar as CalendarIcon, Clock, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { useToast } from './Toast';
 import Pagination from './Pagination';
@@ -152,7 +153,7 @@ export default function LeaveManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-5 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-800 capitalize">{leave.leave_type}</div>
+                      <div className="text-sm font-semibold text-gray-800">{fmtLabel(leave.leave_type)}</div>
                       <div className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                         <CalendarIcon size={14} className="text-gray-400" />
                         {new Date(leave.leave_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
@@ -161,7 +162,7 @@ export default function LeaveManagement() {
                     <td className="px-6 py-5 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 capitalize">
                         <Clock size={12} />
-                        {leave.day_type.replace('_', ' ')}
+                        {fmtLabel(leave.day_type)}
                       </span>
                     </td>
                     <td className="px-6 py-5">
@@ -194,10 +195,10 @@ export default function LeaveManagement() {
                           </button>
                         </div>
                       ) : (
-                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full capitalize ${
+                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${
                           leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                         }`}>
-                          {leave.status}
+                          {fmtLabel(leave.status)}
                         </span>
                       )}
                     </td>
@@ -226,14 +227,14 @@ export default function LeaveManagement() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">{leave.employee_name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{leave.leave_type} leave</p>
+                      <p className="text-xs text-gray-500">{fmtLabel(leave.leave_type)} Leave</p>
                     </div>
                   </div>
                   {leave.status !== 'pending' && (
-                    <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full capitalize ${
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full ${
                       leave.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                     }`}>
-                      {leave.status}
+                      {fmtLabel(leave.status)}
                     </span>
                   )}
                 </div>
@@ -241,7 +242,7 @@ export default function LeaveManagement() {
                   <p className="flex items-center gap-1.5">
                     <CalendarIcon size={12} />
                     {new Date(leave.leave_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    <span className="ml-1 capitalize">· {leave.day_type.replace('_', ' ')}</span>
+                    <span className="ml-1 capitalize">· {fmtLabel(leave.day_type)}</span>
                   </p>
                   {leave.reason && <p className="text-gray-600 line-clamp-2">{leave.reason}</p>}
                 </div>

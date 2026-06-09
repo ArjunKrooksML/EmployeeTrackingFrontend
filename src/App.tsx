@@ -114,7 +114,7 @@ function App() {
                 </button>
                 <button type="button" onClick={() => setTabKey(k => k + 1)} className="flex items-center gap-2 sm:gap-3">
                   <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
-                  <h1 className="text-lg sm:text-2xl font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">SVAAS Inframax Solutions OPC Pvt Ltd</h1>
+                  <h1 className="text-[10px] sm:text-lg lg:text-2xl font-semibold tracking-tight leading-tight">SVAAS Inframax Solutions OPC Pvt Ltd</h1>
                 </button>
 
               </div>

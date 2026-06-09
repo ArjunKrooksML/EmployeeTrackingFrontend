@@ -15,6 +15,7 @@ import OrdersView from './components/OrdersView';
 import Login from './components/Login';
 import type { AdminUser } from './lib/api';
 import ChangePasswordModal from './components/ChangePasswordModal';
+import ChatBot from './components/ChatBot';
 
 type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders';
 type UserT = AdminUser;
@@ -295,6 +296,7 @@ function App() {
           </AnimatePresence>
 
           {showChangePass && <ChangePasswordModal onClose={() => setShowChangePass(false)} />}
+          <ChatBot />
         </div>
       </ConfirmProvider>
     </ToastProvider>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api, type SalaryResult } from '../lib/api';
 import { Save, RefreshCw, FileDown } from 'lucide-react';
 import { useToast } from './Toast';
@@ -19,23 +19,49 @@ export default function Payroll() {
   const [results, setResults] = useState<SalaryResult[]>([]);
   const [advances, setAdvances] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
+  const [computing, setComputing] = useState(false);
   const [saving, setSaving] = useState<number | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
 
-  const onCompute = async () => {
+  const loadSaved = useCallback(async (m: number, y: number) => {
     setLoading(true);
     setResults([]);
     setSavedIds(new Set());
     try {
+      const data = await api.salary.getSaved(m, y);
+      if (data.length > 0) {
+        setResults(data);
+        const adv: Record<number, string> = {};
+        const ids = new Set<number>();
+        data.forEach(r => {
+          adv[r.employee_id] = String(r.advance_deduction);
+          ids.add(r.employee_id);
+        });
+        setAdvances(adv);
+        setSavedIds(ids);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to load saved payrolls');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadSaved(month, year); }, [month, year]);
+
+  const onCompute = async () => {
+    setComputing(true);
+    try {
       const data = await api.salary.computeAll(month, year);
       setResults(data);
+      setSavedIds(new Set());
       const adv: Record<number, string> = {};
       data.forEach(r => { adv[r.employee_id] = String(r.advance_deduction); });
       setAdvances(adv);
     } catch (e: any) {
       toast.error(e.message || 'Failed to compute');
     } finally {
-      setLoading(false);
+      setComputing(false);
     }
   };
 
@@ -89,15 +115,27 @@ export default function Payroll() {
         </div>
         <button
           onClick={onCompute}
-          disabled={loading}
+          disabled={computing || loading}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
         >
-          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-          {loading ? 'Computing…' : 'Compute'}
+          <RefreshCw size={15} className={computing ? 'animate-spin' : ''} />
+          {computing ? 'Computing…' : 'Recompute'}
         </button>
       </div>
 
-      {results.length > 0 && (
+      {loading && (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-7 w-7 border-4 border-gray-200 border-t-blue-600" />
+        </div>
+      )}
+
+      {!loading && results.length === 0 && (
+        <div className="text-center py-12 text-gray-400">
+          <p className="text-sm">No payroll for {MONTHS[month - 1]} {year}. Click <strong>Recompute</strong> to generate.</p>
+        </div>
+      )}
+
+      {!loading && results.length > 0 && (
         <div className="-mx-3 sm:mx-0 overflow-x-auto rounded-xl border border-gray-200">
           <table className="w-full text-sm min-w-[700px]">
             <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
@@ -118,8 +156,9 @@ export default function Payroll() {
               {results.map(r => {
                 const rc = recomputed(r);
                 const saved = savedIds.has(r.employee_id);
+                const advChanged = parseFloat(advances[r.employee_id] || '0') !== r.advance_deduction;
                 return (
-                  <tr key={r.employee_id} className={saved ? 'bg-green-50' : 'hover:bg-gray-50'}>
+                  <tr key={r.employee_id} className={saved && !advChanged ? 'bg-green-50' : 'hover:bg-gray-50'}>
                     <td className="px-4 py-3 font-medium text-gray-800">{r.employee_name}</td>
                     <td className="px-4 py-3 text-right text-gray-700">{fmt(r.gross_salary)}</td>
                     <td className="px-4 py-3 text-right">
@@ -143,7 +182,10 @@ export default function Payroll() {
                         type="number"
                         min="0"
                         value={advances[r.employee_id] ?? '0'}
-                        onChange={e => setAdvances(prev => ({ ...prev, [r.employee_id]: e.target.value }))}
+                        onChange={e => {
+                          setAdvances(prev => ({ ...prev, [r.employee_id]: e.target.value }));
+                          setSavedIds(prev => { const s = new Set(prev); s.delete(r.employee_id); return s; });
+                        }}
                         className="w-full px-2 py-1 border border-gray-200 rounded text-right text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                       />
                     </td>
@@ -151,17 +193,17 @@ export default function Payroll() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => onSave(r)}
-                        disabled={saving === r.employee_id || saved}
+                        disabled={saving === r.employee_id || (saved && !advChanged)}
                         className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
                       >
                         {saving === r.employee_id
                           ? <div className="h-3 w-3 animate-spin rounded-full border border-white/30 border-t-white" />
                           : <Save size={12} />}
-                        {saved ? 'Saved' : 'Save'}
+                        {saved && !advChanged ? 'Saved' : 'Save'}
                       </button>
                     </td>
                     <td className="px-4 py-3">
-                      {saved ? (
+                      {saved && !advChanged ? (
                         <PDFDownloadLink
                           document={<PayslipPDF result={rc} advance={parseFloat(advances[r.employee_id] || '0') || 0} />}
                           fileName={`payslip-${r.employee_name.replace(/\s+/g, '-')}-${MONTHS[month - 1]}-${year}.pdf`}

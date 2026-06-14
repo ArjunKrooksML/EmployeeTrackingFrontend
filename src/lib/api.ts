@@ -265,7 +265,17 @@ export const api = {
         body: JSON.stringify({ refresh_token: refresh }),
       }, false);
     },
-    logout: () => {
+    logout: async () => {
+      const refresh = getRefreshToken();
+      if (refresh) {
+        try {
+          await fetch(`${BACKEND_URL}/admin/auth/logout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refresh }),
+          });
+        } catch {}
+      }
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
     },
@@ -406,6 +416,8 @@ export const api = {
     deleteSO: (id: number): Promise<void> => apiRequest(`/orders/so/${id}`, { method: 'DELETE' }),
   },
   salary: {
+    getSaved: (month: number, year: number): Promise<SalaryResult[]> =>
+      apiRequest<SalaryResult[]>(`/salary/saved/${year}/${month}`),
     computeAll: async (month: number, year: number): Promise<SalaryResult[]> =>
       apiRequest<SalaryResult[]>('/salary/compute/all', {
         method: 'POST',

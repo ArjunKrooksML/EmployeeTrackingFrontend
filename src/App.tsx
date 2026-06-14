@@ -13,6 +13,7 @@ import AdminDashboard from './components/AdminDashboard';
 import Payroll from './components/Payroll';
 import OrdersView from './components/OrdersView';
 import Login from './components/Login';
+import { api } from './lib/api';
 import type { AdminUser } from './lib/api';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import ChatBot from './components/ChatBot';
@@ -76,11 +77,10 @@ function App() {
     return () => window.removeEventListener('admin:auth-expired', onExpired);
   }, []);
 
-  const onSignOut = () => {
+  const onSignOut = async () => {
+    await api.auth.logout();
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     setShowMenu(false);
     setShowProfile(false);
   };

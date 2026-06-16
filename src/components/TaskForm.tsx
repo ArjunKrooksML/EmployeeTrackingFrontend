@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, type Task, type Employee, type TaskPayload, type Project } from '../lib/api';
-import { X, ListChecks, Users, Calendar, Tag } from 'lucide-react';
+import { X, ListChecks, Users, Calendar, Tag, Paperclip, Trash2 } from 'lucide-react';
 import { useToast } from './Toast';
 import ProjectSearch from './ProjectSearch';
 
@@ -33,6 +33,13 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
     task_type: '', tools_type: '',
   });
   const [loading, setLoading] = useState(false);
+  const [atts, setAtts] = useState<{ id: number; file_name: string; url: string }[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (task) api.tasks.getAttachments(task.task_id).then(setAtts).catch(() => {});
+  }, [task?.task_id]);
 
   useEffect(() => {
     if (task) {
@@ -44,6 +51,31 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
       });
     }
   }, [task]);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (task) {
+      setUploading(true);
+      try {
+        const att = await api.tasks.uploadAttachment(task.task_id, file);
+        setAtts(prev => [...prev, att]);
+        toast.success('File attached');
+      } catch { toast.error('Upload failed'); }
+      setUploading(false);
+    } else {
+      setPendingFiles(prev => [...prev, file]);
+    }
+    e.target.value = '';
+  }
+
+  async function handleDeleteAtt(attId: number) {
+    if (!task) return;
+    try {
+      await api.tasks.deleteAttachment(task.task_id, attId);
+      setAtts(prev => prev.filter(a => a.id !== attId));
+    } catch { toast.error('Failed to remove'); }
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
@@ -62,8 +94,14 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
       task_type: form.task_type || null, tools_type: form.task_type === 'Tools' ? (form.tools_type || null) : null,
     };
     try {
-      if (task) await api.tasks.update(task.task_id, payload);
-      else await api.tasks.create(payload);
+      if (task) {
+        await api.tasks.update(task.task_id, payload);
+      } else {
+        const created = await api.tasks.create(payload);
+        for (const file of pendingFiles) {
+          try { await api.tasks.uploadAttachment(created.task_id, file); } catch { /* silent */ }
+        }
+      }
       toast.success(task ? 'Task updated' : 'Task created');
       onClose();
     } catch (err) {
@@ -83,7 +121,6 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-        {/* Task Details */}
         <Section icon={<ListChecks size={14} />} title="Task Details">
           <div>
             <label className={LABEL}>Task Title <span className="text-red-400 normal-case tracking-normal">*</span></label>
@@ -92,6 +129,25 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           <div>
             <label className={LABEL}>Description</label>
             <textarea name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Optional details…" className={INPUT + ' resize-none'} />
+          </div>
+          <div>
+            {atts.map(a => (
+              <div key={a.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 mb-1.5">
+                <a href={a.url} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 hover:underline truncate max-w-[85%]">{a.file_name}</a>
+                <button type="button" onClick={() => handleDeleteAtt(a.id)} className="text-slate-400 hover:text-red-500 transition ml-2 shrink-0"><Trash2 size={14} /></button>
+              </div>
+            ))}
+            {pendingFiles.map((f, i) => (
+              <div key={i} className="flex items-center justify-between bg-orange-50 rounded-lg px-3 py-2 mb-1.5">
+                <span className="text-sm text-slate-700 truncate max-w-[85%]">{f.name}</span>
+                <button type="button" onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500 transition ml-2 shrink-0"><Trash2 size={14} /></button>
+              </div>
+            ))}
+            <label className={`inline-flex items-center gap-1.5 cursor-pointer text-sm font-medium text-slate-500 hover:text-indigo-600 transition ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              <Paperclip size={14} />
+              {uploading ? 'Uploading…' : 'Attach a file'}
+              <input type="file" className="hidden" onChange={handleUpload} disabled={uploading} />
+            </label>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -113,7 +169,6 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           </div>
         </Section>
 
-        {/* Assignment */}
         <Section icon={<Users size={14} />} title="Assignment">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -135,7 +190,6 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           </div>
         </Section>
 
-        {/* Status & Priority */}
         <Section icon={<Tag size={14} />} title="Status & Priority">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -159,7 +213,6 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
           </div>
         </Section>
 
-        {/* Timeline */}
         <Section icon={<Calendar size={14} />} title="Timeline">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -172,6 +225,7 @@ export default function TaskForm({ task, employees, projects, onClose }: TaskFor
             </div>
           </div>
         </Section>
+
       </form>
 
       <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">

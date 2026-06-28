@@ -267,6 +267,8 @@ export const api = {
     },
     logout: async () => {
       const refresh = getRefreshToken();
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       if (refresh) {
         try {
           await fetch(`${BACKEND_URL}/admin/auth/logout`, {
@@ -276,8 +278,6 @@ export const api = {
           });
         } catch {}
       }
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
     },
     sendOtp: async (email: string): Promise<void> => {
       return apiRequest<void>('/admin/auth/send-otp', {

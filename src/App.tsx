@@ -21,6 +21,14 @@ import ChatBot from './components/ChatBot';
 type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders';
 type UserT = AdminUser;
 
+function isExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload.exp * 1000 < Date.now();
+  } catch { return true; }
+}
+
 const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
   { key: 'dashboard', icon: <Home size={20} />, label: 'Dashboard' },
   { key: 'employees', icon: <Users size={20} />, label: 'Employees' },
@@ -40,6 +48,12 @@ function App() {
     try {
       const parsed = JSON.parse(raw) as Partial<UserT>;
       if (!parsed || !parsed.email || !parsed.id) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        return null;
+      }
+      if (isExpired(localStorage.getItem('accessToken')) && isExpired(localStorage.getItem('refreshToken'))) {
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -77,12 +91,12 @@ function App() {
     return () => window.removeEventListener('admin:auth-expired', onExpired);
   }, []);
 
-  const onSignOut = async () => {
-    await api.auth.logout();
-    setUser(null);
+  const onSignOut = () => {
     localStorage.removeItem('user');
+    setUser(null);
     setShowMenu(false);
     setShowProfile(false);
+    api.auth.logout();
   };
 
   if (!user) {

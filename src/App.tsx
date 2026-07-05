@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu, Package } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu, Package, FileText, Receipt } from 'lucide-react';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import NotificationBell from './components/NotificationBell';
@@ -12,13 +12,15 @@ import LeaveManagement from './components/LeaveManagement';
 import AdminDashboard from './components/AdminDashboard';
 import Payroll from './components/Payroll';
 import OrdersView from './components/OrdersView';
+import DPRView from './components/DPRView';
+import ExpensesManagement from './components/ExpensesManagement';
 import Login from './components/Login';
 import { api } from './lib/api';
 import type { AdminUser } from './lib/api';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import ChatBot from './components/ChatBot';
 
-type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders';
+type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders' | 'dpr' | 'expenses';
 type UserT = AdminUser;
 
 function isExpired(token: string | null): boolean {
@@ -38,6 +40,8 @@ const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
   { key: 'leaves', icon: <Briefcase size={20} />, label: 'Leaves' },
   { key: 'payroll', icon: <Wallet size={20} />, label: 'Payroll' },
   { key: 'orders', icon: <Package size={20} />, label: 'Orders' },
+  { key: 'dpr', icon: <FileText size={20} />, label: 'DPR' },
+  { key: 'expenses', icon: <Receipt size={20} />, label: 'Expenses' },
 ];
 
 function App() {
@@ -226,6 +230,8 @@ function App() {
                   {tab === 'leaves' && <LeaveManagement />}
                   {tab === 'payroll' && <Payroll />}
                   {tab === 'orders' && <OrdersView />}
+                  {tab === 'dpr' && <DPRView />}
+                  {tab === 'expenses' && <ExpensesManagement />}
                 </motion.div>
               </AnimatePresence>
             </main>

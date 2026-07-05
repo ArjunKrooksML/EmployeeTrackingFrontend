@@ -120,6 +120,31 @@ export interface Attendance {
   created_at: string;
 }
 
+export interface DPREntry {
+  id: number;
+  project_id: number;
+  date: string;
+  description: string;
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface ExpItem { description: string; amount: number; }
+
+export interface ExpenseResp {
+  id: number;
+  employee_id: number;
+  employee_name?: string;
+  title: string;
+  date: string;
+  items: ExpItem[];
+  attachment_url?: string;
+  attachment_name?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  remarks?: string;
+  created_at: string;
+}
+
 export interface Leave {
   id: number;
   employee_id: number;
@@ -430,6 +455,20 @@ export const api = {
     updateSO: (id: number, data: { po_id: number; invoice_number?: string | null; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
       apiRequest(`/orders/so/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteSO: (id: number): Promise<void> => apiRequest(`/orders/so/${id}`, { method: 'DELETE' }),
+  },
+  dpr: {
+    projects: (): Promise<Project[]> => apiRequest('/dpr/projects'),
+    list: (projectId: number, page = 1, pageSize = 20): Promise<PaginatedResponse<DPREntry>> =>
+      apiRequest(`/dpr/${projectId}?page=${page}&page_size=${pageSize}`),
+    create: (projectId: number, date: string, description: string): Promise<DPREntry> =>
+      apiRequest(`/dpr/${projectId}`, { method: 'POST', body: JSON.stringify({ date, description }) }),
+  },
+  expenses: {
+    list: (page = 1, pageSize = 20, status?: string): Promise<PaginatedResponse<ExpenseResp>> =>
+      apiRequest(`/admin/expenses?page=${page}&page_size=${pageSize}${status ? `&status=${status}` : ''}`),
+    get: (id: number): Promise<ExpenseResp> => apiRequest(`/admin/expenses/${id}`),
+    review: (id: number, status: string, remarks?: string): Promise<ExpenseResp> =>
+      apiRequest(`/admin/expenses/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, remarks }) }),
   },
   salary: {
     getSaved: (month: number, year: number): Promise<SalaryResult[]> =>

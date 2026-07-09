@@ -14,6 +14,7 @@ const STATUS: Record<string, { letter: string; bg: string; font: string }> = {
 export function generateAttendancePivot(records: AttRow[], month: number, year: number) {
   const daysInMonth = new Date(year, month, 0).getDate();
   const monthName = MONTHS[month - 1];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
 
   // Build map: empId → { name, days: Map<day, status> }
   const empMap = new Map<number, { name: string; days: Map<number, string> }>();
@@ -109,11 +110,27 @@ export function generateAttendancePivot(records: AttRow[], month: number, year: 
           else if (status === 'late') l++;
           else if (status === 'absent') a++;
         } else {
-          setCell(ws, d, row, '—', {
-            fill: { fgColor: { rgb: 'FAFAFA' } },
-            font: { color: { rgb: 'CCCCCC' }, sz: 9 },
-            alignment: { horizontal: 'center', vertical: 'center' },
-          });
+          const cellDate = new Date(year, month - 1, d);
+          if (cellDate <= today) {
+            setCell(ws, d, row, 'A', {
+              fill: { fgColor: { rgb: STATUS.absent.bg } },
+              font: { bold: true, color: { rgb: STATUS.absent.font }, sz: 9 },
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top:    { style: 'thin', color: { rgb: 'CCCCCC' } },
+                bottom: { style: 'thin', color: { rgb: 'CCCCCC' } },
+                left:   { style: 'thin', color: { rgb: 'CCCCCC' } },
+                right:  { style: 'thin', color: { rgb: 'CCCCCC' } },
+              },
+            });
+            a++;
+          } else {
+            setCell(ws, d, row, '—', {
+              fill: { fgColor: { rgb: 'FAFAFA' } },
+              font: { color: { rgb: 'CCCCCC' }, sz: 9 },
+              alignment: { horizontal: 'center', vertical: 'center' },
+            });
+          }
         }
       }
     }

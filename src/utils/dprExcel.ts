@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx-js-style';
 import type { DPREntry } from '../lib/api';
-import { MONTHS, colLetter, addr, setCell } from './helpers';
+import { MONTHS, colLetter, setCell } from './helpers';
 
 export function generateDPRSummary(
   entries: DPREntry[],

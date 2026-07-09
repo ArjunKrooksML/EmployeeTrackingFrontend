@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { MONTHS, colLetter, addr, setCell } from './helpers';
+import { MONTHS, colLetter, setCell } from './helpers';
 
 type AttRow = { employee_id: number; employee_name?: string; date: string; attendance: string; checkin?: string | null; lat?: number | null; lng?: number | null };
 

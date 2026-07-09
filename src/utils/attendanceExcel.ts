@@ -1,8 +1,7 @@
 import * as XLSX from 'xlsx-js-style';
+import { MONTHS, colLetter, addr, setCell } from './helpers';
 
 type AttRow = { employee_id: number; employee_name?: string; date: string; attendance: string; checkin?: string | null; lat?: number | null; lng?: number | null };
-
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const STATUS: Record<string, { letter: string; bg: string; font: string }> = {
   present: { letter: 'P', bg: 'C6EFCE', font: '276221' },
@@ -10,20 +9,6 @@ const STATUS: Record<string, { letter: string; bg: string; font: string }> = {
   absent:  { letter: 'A', bg: 'FFC7CE', font: '9C0006' },
   pending: { letter: 'U', bg: 'FFE0B2', font: 'BF5A00' },
 };
-
-// Convert 0-indexed column number to Excel letter (A, B, ... Z, AA, ...)
-function colLetter(n: number): string {
-  let s = '';
-  n++;
-  while (n > 0) { s = String.fromCharCode(65 + (n - 1) % 26) + s; n = Math.floor((n - 1) / 26); }
-  return s;
-}
-
-function addr(col: number, row: number) { return `${colLetter(col)}${row + 1}`; }
-
-function setCell(ws: any, col: number, row: number, v: string | number, s: any = {}) {
-  ws[addr(col, row)] = { v, t: typeof v === 'number' ? 'n' : 's', s };
-}
 
 // ── Pivot Excel: all employees × days ────────────────────────────────
 export function generateAttendancePivot(records: AttRow[], month: number, year: number) {

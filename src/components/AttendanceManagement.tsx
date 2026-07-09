@@ -4,13 +4,10 @@ import { Download, MapPin, ArrowLeft, ChevronRight, X } from 'lucide-react';
 import { useToast } from './Toast';
 import Pagination from './Pagination';
 import { generateAttendancePivot } from '../utils/attendanceExcel';
+import { MONTHS, currentYear, YEARS, attBadge } from '../utils/helpers';
 
 type AttRow = Attendance & { employee_name?: string };
 type EmpSummary = { id: number; name: string; total: number; pending: number; present: number; absent: number; late: number };
-
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const currentYear = new Date().getFullYear();
-const YEARS = [currentYear - 1, currentYear, currentYear + 1];
 
 export default function AttendanceManagement() {
   const toast = useToast();
@@ -85,15 +82,6 @@ export default function AttendanceManagement() {
 
   const formatTime = (t: string | null | undefined) => t ? String(t).slice(0, 5) : '-';
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
-  const statusBadge = (status: string) => {
-    const cls = status === 'present' ? 'bg-green-100 text-green-800'
-      : status === 'absent' ? 'bg-red-100 text-red-800'
-      : status === 'late' ? 'bg-yellow-100 text-yellow-800'
-      : 'bg-orange-100 text-orange-800';
-    const label = status === 'pending' ? 'Under Review' : status.charAt(0).toUpperCase() + status.slice(1);
-    return <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${cls}`}>{label}</span>;
-  };
 
   const exportBtn = (
     <button
@@ -230,7 +218,7 @@ export default function AttendanceManagement() {
                       <tr key={record.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(record.date)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatTime(record.checkin)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{statusBadge(record.attendance)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{attBadge(record.attendance)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {record.lat && record.lng ? (
                             <a href={`https://www.openstreetmap.org/?mlat=${record.lat}&mlon=${record.lng}&zoom=16`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 transition flex items-center gap-1">
@@ -260,7 +248,7 @@ export default function AttendanceManagement() {
                   <div key={record.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-sm font-semibold text-gray-900">{formatDate(record.date)}</p>
-                      {statusBadge(record.attendance)}
+                      {attBadge(record.attendance)}
                     </div>
                     <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                       <span>Check-in: <span className="font-medium text-gray-700">{formatTime(record.checkin)}</span></span>

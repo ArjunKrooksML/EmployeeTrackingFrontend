@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import type { ExpenseResp, ExpItem } from '../lib/api';
 import { useToast } from './Toast';
 import Pagination from './Pagination';
+import { expBadge } from '../utils/helpers';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 const PAGE_SIZE = 20;
@@ -14,12 +15,6 @@ const STATUS_TABS: { key: StatusFilter; label: string }[] = [
   { key: 'approved', label: 'Approved' },
   { key: 'rejected', label: 'Rejected' },
 ];
-
-const statusBadge = (s: string) => {
-  if (s === 'approved') return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">Approved</span>;
-  if (s === 'rejected') return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">Rejected</span>;
-  return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">Pending</span>;
-};
 
 const total = (items: ExpItem[]) => items.reduce((s, i) => s + Number(i.amount), 0);
 
@@ -132,7 +127,7 @@ export default function ExpensesManagement() {
                       {new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-800">₹{total(e.items).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3">{statusBadge(e.status)}</td>
+                    <td className="px-4 py-3">{expBadge(e.status)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -211,7 +206,7 @@ export default function ExpensesManagement() {
               {/* Status / remarks */}
               <div className="flex items-center gap-2">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status:</p>
-                {statusBadge(selected.status)}
+                {expBadge(selected.status)}
               </div>
               {selected.remarks && (
                 <div>

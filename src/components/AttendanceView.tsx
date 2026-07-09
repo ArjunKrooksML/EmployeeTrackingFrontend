@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api, type Employee, type Attendance } from '../lib/api';
 import { ArrowLeft, Clock, MapPin } from 'lucide-react';
 import { useToast } from './Toast';
+import { attBadge } from '../utils/helpers';
 
 interface AttendanceViewProps {
   employee: Employee;
@@ -59,15 +60,6 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
       month: 'short',
       day: 'numeric',
     });
-  };
-
-  const statusBadge = (status: string) => {
-    const cls = status === 'present' ? 'bg-green-100 text-green-800'
-      : status === 'absent' ? 'bg-red-100 text-red-800'
-      : status === 'late' ? 'bg-yellow-100 text-yellow-800'
-      : 'bg-orange-100 text-orange-800'; // pending
-    const label = status === 'pending' ? 'Under Review' : status.charAt(0).toUpperCase() + status.slice(1);
-    return <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${cls}`}>{label}</span>;
   };
 
   return (
@@ -128,7 +120,7 @@ export default function AttendanceView({ employee, onClose }: AttendanceViewProp
                     {formatTime(record.checkin)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {statusBadge(record.attendance)}
+                    {attBadge(record.attendance)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {record.lat && record.lng ? (

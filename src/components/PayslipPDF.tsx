@@ -1,8 +1,7 @@
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import type { SalaryResult } from '../lib/api';
 import { COMPANY } from '../lib/company';
-
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+import { MONTHS } from '../utils/helpers';
 
 const fmt = (n: number) => 'Rs. ' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

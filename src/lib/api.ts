@@ -58,7 +58,6 @@ export interface Project {
   start_date: string;
   completion_date?: string | null;
   po_prefix?: string | null;
-  has_forging?: boolean;
 }
 
 export interface POItem { id: number; size: string; quantity: number; }
@@ -129,7 +128,7 @@ export interface DPREntry {
   mm20: number;
   mm25: number;
   mm32: number;
-  forging_qty: number;
+  operator_name: string;
   uploaded_by: string;
   created_at: string;
 }
@@ -479,8 +478,6 @@ export const api = {
       apiRequest(`/dpr/${projectId}`, { method: 'POST', body: JSON.stringify(data) }),
     update: (entryId: number, data: Omit<DPREntry, 'id' | 'project_id' | 'uploaded_by' | 'created_at'>): Promise<DPREntry> =>
       apiRequest(`/dpr/${entryId}`, { method: 'PUT', body: JSON.stringify(data) }),
-    setForging: (projectId: number, has_forging: boolean): Promise<Project> =>
-      apiRequest(`/dpr/projects/${projectId}/forging`, { method: 'PATCH', body: JSON.stringify({ has_forging }) }),
   },
   expenses: {
     list: (page = 1, pageSize = 20, status?: string): Promise<PaginatedResponse<ExpenseResp>> =>

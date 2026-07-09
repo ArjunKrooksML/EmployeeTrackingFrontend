@@ -10,10 +10,10 @@ import { MONTHS, currentYear, YEARS } from '../utils/helpers';
 
 const PAGE_SIZE = 20;
 
-type FormState = { date: string; mm16: string; mm20: string; mm25: string; mm32: string; forging: string };
+type FormState = { date: string; mm16: string; mm20: string; mm25: string; mm32: string; operator: string };
 const emptyForm = (): FormState => ({
   date: new Date().toISOString().slice(0, 10),
-  mm16: '', mm20: '', mm25: '', mm32: '', forging: '',
+  mm16: '', mm20: '', mm25: '', mm32: '', operator: '',
 });
 const formFromEntry = (e: DPREntry): FormState => ({
   date: e.date,
@@ -21,15 +21,14 @@ const formFromEntry = (e: DPREntry): FormState => ({
   mm20: e.mm20 ? String(e.mm20) : '',
   mm25: e.mm25 ? String(e.mm25) : '',
   mm32: e.mm32 ? String(e.mm32) : '',
-  forging: e.forging_qty ? String(e.forging_qty) : '',
+  operator: e.operator_name || '',
 });
 
 const entryTotal = (e: DPREntry) =>
-  (e.mm16 || 0) + (e.mm20 || 0) + (e.mm25 || 0) + (e.mm32 || 0) + (e.forging_qty || 0);
+  (e.mm16 || 0) + (e.mm20 || 0) + (e.mm25 || 0) + (e.mm32 || 0);
 
 const formTotal = (f: FormState) =>
-  (Number(f.mm16) || 0) + (Number(f.mm20) || 0) + (Number(f.mm25) || 0) +
-  (Number(f.mm32) || 0) + (Number(f.forging) || 0);
+  (Number(f.mm16) || 0) + (Number(f.mm20) || 0) + (Number(f.mm25) || 0) + (Number(f.mm32) || 0);
 
 export default function DPRView() {
   const toast = useToast();
@@ -81,7 +80,7 @@ export default function DPRView() {
       mm20: Number(form.mm20) || 0,
       mm25: Number(form.mm25) || 0,
       mm32: Number(form.mm32) || 0,
-      forging_qty: Number(form.forging) || 0,
+      operator_name: form.operator,
     };
     setSubmitting(true);
     try {
@@ -103,23 +102,12 @@ export default function DPRView() {
     }
   };
 
-  const handleToggleForging = async (val: boolean) => {
-    if (!selected) return;
-    try {
-      await api.dpr.setForging(selected.project_id, val);
-      setSelected(prev => prev ? { ...prev, has_forging: val } : prev);
-      setProjects(prev => prev.map(p => p.project_id === selected.project_id ? { ...p, has_forging: val } : p));
-    } catch {
-      toast.error('Failed to update forging setting');
-    }
-  };
-
   const handleDownload = async () => {
     if (!selected) return;
     setExporting(true);
     try {
       const data = await api.dpr.monthly(selected.project_id, exportMonth, exportYear);
-      generateDPRSummary(data.items, selected.name, selected.client_name, !!selected.has_forging, exportMonth, exportYear);
+      generateDPRSummary(data.items, selected.name, selected.client_name, exportMonth, exportYear);
       setExportModal(false);
     } catch {
       toast.error('Failed to generate report');
@@ -197,14 +185,7 @@ export default function DPRView() {
                 <p className="text-xs text-slate-500">{total} entries</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Forging toggle */}
-              <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5">
-                <input type="checkbox" checked={!!selected.has_forging}
-                  onChange={e => handleToggleForging(e.target.checked)}
-                  className="w-4 h-4 accent-indigo-600" />
-                Has Forging
-              </label>
+            <div className="flex items-center gap-2">
               <button onClick={() => setExportModal(true)}
                 className="flex items-center gap-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition">
                 <Download size={15} /> Download
@@ -229,11 +210,11 @@ export default function DPRView() {
                   <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
                     <th className="px-3 py-2.5 rounded-tl-lg">#</th>
                     <th className="px-3 py-2.5">Date</th>
+                    <th className="px-3 py-2.5">Operator</th>
                     <th className="px-3 py-2.5 text-right">16MM</th>
                     <th className="px-3 py-2.5 text-right">20MM</th>
                     <th className="px-3 py-2.5 text-right">25MM</th>
                     <th className="px-3 py-2.5 text-right">32MM</th>
-                    {selected.has_forging && <th className="px-3 py-2.5 text-right">Forging</th>}
                     <th className="px-3 py-2.5 text-right rounded-tr-lg">Total</th>
                   </tr>
                 </thead>
@@ -247,11 +228,11 @@ export default function DPRView() {
                         <td className="px-3 py-3 font-medium text-slate-700 whitespace-nowrap">
                           {new Date(d.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>
+                        <td className="px-3 py-3 text-slate-600">{d.operator_name || '—'}</td>
                         <td className="px-3 py-3 text-right text-slate-600">{d.mm16 || '—'}</td>
                         <td className="px-3 py-3 text-right text-slate-600">{d.mm20 || '—'}</td>
                         <td className="px-3 py-3 text-right text-slate-600">{d.mm25 || '—'}</td>
                         <td className="px-3 py-3 text-right text-slate-600">{d.mm32 || '—'}</td>
-                        {selected.has_forging && <td className="px-3 py-3 text-right text-slate-600">{d.forging_qty || '—'}</td>}
                         <td className={`px-3 py-3 text-right font-semibold ${tot === 0 ? 'text-slate-400' : 'text-slate-800'}`}>{tot}</td>
                       </tr>
                     );
@@ -283,6 +264,11 @@ export default function DPRView() {
                 <input type="date" value={form.date} onChange={e => setF('date', e.target.value)} className={inputCls} />
               </div>
               <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Operator Name</label>
+                <input type="text" value={form.operator} onChange={e => setF('operator', e.target.value)}
+                  placeholder="Enter operator name" className={inputCls} />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-slate-600 mb-2">Quantities (kg)</label>
                 <div className="grid grid-cols-2 gap-3">
                   {(['mm16','mm20','mm25','mm32'] as const).map(key => (
@@ -296,15 +282,6 @@ export default function DPRView() {
                   ))}
                 </div>
               </div>
-              {selected?.has_forging && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Forging (qty)</label>
-                  <input type="number" min="0" value={form.forging}
-                    onChange={e => setF('forging', e.target.value)}
-                    placeholder="0"
-                    className={inputCls} />
-                </div>
-              )}
               <div className="flex items-center justify-between bg-slate-50 rounded-lg px-4 py-2.5">
                 <span className="text-xs font-medium text-slate-500">Total</span>
                 <span className="text-sm font-bold text-slate-800">{formTotal(form).toLocaleString('en-IN')}</span>

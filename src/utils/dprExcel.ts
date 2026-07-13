@@ -15,9 +15,9 @@ export function generateDPRSummary(
     .filter(e => { const d = new Date(e.date); return d.getMonth() + 1 === month && d.getFullYear() === year; })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const COL_SNO = 0, COL_DATE = 1, COL_OPERATOR = 2;
-  const COL_MM16 = 3, COL_MM20 = 4, COL_MM25 = 5, COL_MM32 = 6, COL_TOTAL = 7;
-  const NUM_COLS = 8;
+  const COL_SNO = 0, COL_DATE = 1, COL_OPERATOR = 2, COL_DESC = 3;
+  const COL_MM16 = 4, COL_MM20 = 5, COL_MM25 = 6, COL_MM32 = 7, COL_TOTAL = 8;
+  const NUM_COLS = 9;
 
   const ws: any = {};
   const merges: any[] = [];
@@ -60,6 +60,7 @@ export function generateDPRSummary(
   setCell(ws, COL_SNO, row, 'S.NO', hdrS);
   setCell(ws, COL_DATE, row, 'DATE', hdrS);
   setCell(ws, COL_OPERATOR, row, 'OPERATOR', hdrS);
+  setCell(ws, COL_DESC, row, 'DESCRIPTION', hdrS);
   setCell(ws, COL_MM16, row, '16 MM', hdrS);
   setCell(ws, COL_MM20, row, '20 MM', hdrS);
   setCell(ws, COL_MM25, row, '25 MM', hdrS);
@@ -97,6 +98,7 @@ export function generateDPRSummary(
     setCell(ws, COL_SNO, row, i + 1, cellS());
     setCell(ws, COL_DATE, row, ds, { ...cellS(true), alignment: { horizontal: 'left', vertical: 'center' } });
     setCell(ws, COL_OPERATOR, row, e.operator_name || '', { ...cellS(), alignment: { horizontal: 'left', vertical: 'center' } });
+    setCell(ws, COL_DESC, row, e.description || '', { ...cellS(), alignment: { horizontal: 'left', vertical: 'center' } });
     setCell(ws, COL_MM16, row, v16 || '', cellS());
     setCell(ws, COL_MM20, row, v20 || '', cellS());
     setCell(ws, COL_MM25, row, v25 || '', cellS());
@@ -113,6 +115,7 @@ export function generateDPRSummary(
   setCell(ws, COL_SNO, row, '', totS);
   setCell(ws, COL_DATE, row, 'TOTAL', { ...totS, alignment: { horizontal: 'right', vertical: 'center' } });
   setCell(ws, COL_OPERATOR, row, '', totS);
+  setCell(ws, COL_DESC, row, '', totS);
   setCell(ws, COL_MM16, row, totMm16, totS);
   setCell(ws, COL_MM20, row, totMm20, totS);
   setCell(ws, COL_MM25, row, totMm25, totS);
@@ -122,7 +125,7 @@ export function generateDPRSummary(
 
   ws['!ref'] = `A1:${colLetter(NUM_COLS - 1)}${row}`;
   ws['!merges'] = merges;
-  ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 18 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 18 }, { wch: 22 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
   ws['!rows'] = [
     { hpt: 30 }, { hpt: 22 }, { hpt: 16 }, { hpt: 6 }, { hpt: 20 },
     ...rows.map(() => ({ hpt: 18 })),

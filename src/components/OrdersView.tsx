@@ -39,6 +39,7 @@ export default function OrdersView() {
   const [summaryProject, setSummaryProject] = useState<Project | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
 
+  const [tab, setTab] = useState<'po' | 'so'>('po');
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState(defaultFrom());
   const [toDate, setToDate] = useState('');
@@ -178,141 +179,151 @@ export default function OrdersView() {
         )}
       </div>
 
-      {/* Purchase Orders */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center"><FileText size={15} className="text-blue-600" /></div>
-            <h3 className="text-base font-bold text-slate-800">Purchase Orders</h3>
-            <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">{filteredPOs.length}</span>
-          </div>
-          <button onClick={() => setShowPOForm(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition shadow-sm shadow-blue-600/20">
-            <Plus size={15} /> New PO
-          </button>
-        </div>
+      {/* PO / SO tabs */}
+      <div className="flex border-b border-slate-200">
+        <button
+          onClick={() => setTab('po')}
+          className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px
+            ${tab === 'po' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <FileText size={14} /> Purchase Orders
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${tab === 'po' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>{filteredPOs.length}</span>
+        </button>
+        <button
+          onClick={() => setTab('so')}
+          className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px
+            ${tab === 'so' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <Truck size={14} /> Supply Orders
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${tab === 'so' ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500'}`}>{filteredSOs.length}</span>
+        </button>
+      </div>
 
-        {filteredPOs.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
-            <FileText size={24} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">{q || toDate ? 'No purchase orders match your filters' : 'No purchase orders in this date range'}</p>
+      {tab === 'po' ? (
+        <section className="space-y-3">
+          <div className="flex items-center justify-end">
+            <button onClick={() => setShowPOForm(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition shadow-sm shadow-blue-600/20">
+              <Plus size={15} /> New PO
+            </button>
           </div>
-        ) : (
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
-                <tr>
-                  <th className="px-4 py-3 text-left">Project</th>
-                  <th className="px-4 py-3 text-left">PO Number</th>
-                  <th className="px-4 py-3 text-center">Sizes</th>
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredPOs.map(po => (
-                  <tr key={po.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => setSelectedPO(po)}>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const n = getProjName(po.project_id); return n
-                          ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">{n}</span>
-                          : <span className="text-slate-400 italic text-xs">No project</span>;
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 font-mono font-semibold text-slate-800">{po.po_number}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{po.items.length}</span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{fmt(po.created_at)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={e => { e.stopPropagation(); setEditingPO(po); setShowPOForm(true); }}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
-                          <Pencil size={14} />
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); handleDeletePO(po); }}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
+
+          {filteredPOs.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+              <FileText size={24} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">{q || toDate ? 'No purchase orders match your filters' : 'No purchase orders in this date range'}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Project</th>
+                    <th className="px-4 py-3 text-left">PO Number</th>
+                    <th className="px-4 py-3 text-center">Sizes</th>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      {/* Supply Orders */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-violet-50 flex items-center justify-center"><Truck size={15} className="text-violet-600" /></div>
-            <h3 className="text-base font-bold text-slate-800">Supply Orders</h3>
-            <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">{filteredSOs.length}</span>
-          </div>
-          <button onClick={() => setShowSOForm(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition shadow-sm shadow-violet-600/20">
-            <Plus size={15} /> New SO
-          </button>
-        </div>
-
-        {filteredSOs.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
-            <Truck size={24} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">{q || toDate ? 'No supply orders match your filters' : 'No supply orders in this date range'}</p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
-                <tr>
-                  <th className="px-4 py-3 text-left">Project</th>
-                  <th className="px-4 py-3 text-left">SO #</th>
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredSOs.map(so => (
-                  <tr key={so.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => setSelectedSO(so)}>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const n = getSoProjName(so); return n
-                          ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">{n}</span>
-                          : <span className="text-slate-400 italic text-xs">No project</span>;
-                      })()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="relative group inline-block">
-                        <span className="font-semibold text-violet-700 text-xs">SO-{so.id}</span>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2.5 py-1 bg-slate-800 text-white text-xs rounded-lg whitespace-nowrap shadow-lg pointer-events-none z-10">
-                          {so.po_number}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredPOs.map(po => (
+                    <tr key={po.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => setSelectedPO(po)}>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const n = getProjName(po.project_id); return n
+                            ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">{n}</span>
+                            : <span className="text-slate-400 italic text-xs">No project</span>;
+                        })()}
+                      </td>
+                      <td className="px-4 py-3 font-mono font-semibold text-slate-800">{po.po_number}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{po.items.length}</span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 text-xs">{fmt(po.created_at)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={e => { e.stopPropagation(); setEditingPO(po); setShowPOForm(true); }}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); handleDeletePO(po); }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{fmt(so.created_at)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={e => { e.stopPropagation(); setEditingSO(so); setShowSOForm(true); }}
-                          className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition" title="Edit">
-                          <Pencil size={14} />
-                        </button>
-                        <button onClick={e => { e.stopPropagation(); handleDeleteSO(so); }}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="space-y-3">
+          <div className="flex items-center justify-end">
+            <button onClick={() => setShowSOForm(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition shadow-sm shadow-violet-600/20">
+              <Plus size={15} /> New SO
+            </button>
           </div>
-        )}
-      </section>
+
+          {filteredSOs.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+              <Truck size={24} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">{q || toDate ? 'No supply orders match your filters' : 'No supply orders in this date range'}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Project</th>
+                    <th className="px-4 py-3 text-left">SO #</th>
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredSOs.map(so => (
+                    <tr key={so.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => setSelectedSO(so)}>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const n = getSoProjName(so); return n
+                            ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold">{n}</span>
+                            : <span className="text-slate-400 italic text-xs">No project</span>;
+                        })()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="relative group inline-block">
+                          <span className="font-semibold text-violet-700 text-xs">SO-{so.id}</span>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex items-center px-2.5 py-1 bg-slate-800 text-white text-xs rounded-lg whitespace-nowrap shadow-lg pointer-events-none z-10">
+                            {so.po_number}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 text-xs">{fmt(so.created_at)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={e => { e.stopPropagation(); setEditingSO(so); setShowSOForm(true); }}
+                            className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition" title="Edit">
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); handleDeleteSO(so); }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {showPOForm && (
         <POForm

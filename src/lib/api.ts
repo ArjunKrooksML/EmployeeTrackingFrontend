@@ -129,11 +129,12 @@ export interface DPREntry {
   mm25: number;
   mm32: number;
   operator_name: string;
+  description?: string;
   uploaded_by: string;
   created_at: string;
 }
 
-export interface ExpItem { description: string; amount: number; }
+export interface ExpItem { description: string; amount: number; date?: string; }
 
 export interface ExpenseResp {
   id: number;
@@ -141,6 +142,7 @@ export interface ExpenseResp {
   employee_name?: string;
   title: string;
   date: string;
+  date_to?: string | null;
   items: ExpItem[];
   attachment_url?: string;
   attachment_name?: string;

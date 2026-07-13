@@ -187,19 +187,19 @@ export default function ExpensesManagement() {
                 </table>
               </div>
 
-              {/* Attachment */}
-              {selected.attachment_url && (
+              {/* Attachments */}
+              {(selected.attachments?.length ?? 0) > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Attachment</p>
-                  <a
-                    href={selected.attachment_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition"
-                  >
-                    <Paperclip size={14} />
-                    {selected.attachment_name || 'View File'}
-                  </a>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Attachments</p>
+                  <div className="space-y-1">
+                    {selected.attachments!.map((a, i) => (
+                      <a key={i} href={a.url} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition truncate">
+                        <Paperclip size={13} className="shrink-0" />
+                        {a.name}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
 

@@ -144,8 +144,7 @@ export interface ExpenseResp {
   date: string;
   date_to?: string | null;
   items: ExpItem[];
-  attachment_url?: string;
-  attachment_name?: string;
+  attachments?: { url: string; name: string }[];
   status: 'pending' | 'approved' | 'rejected';
   remarks?: string;
   created_at: string;

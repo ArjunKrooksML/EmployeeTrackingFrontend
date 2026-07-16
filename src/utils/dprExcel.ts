@@ -2,6 +2,115 @@ import * as XLSX from 'xlsx-js-style';
 import type { DPREntry } from '../lib/api';
 import { MONTHS, colLetter, setCell } from './helpers';
 
+export function generateAllSitesSummary(
+  sites: { name: string; entries: DPREntry[] }[],
+  month: number,
+  year: number,
+) {
+  const monthName = MONTHS[month - 1];
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const COL_SITE = 0;
+  const COL_TOTAL = daysInMonth + 1;
+  const NUM_COLS = daysInMonth + 2;
+
+  const ws: any = {};
+  const merges: any[] = [];
+  const merge = (sc: number, ec: number, sr: number, er: number) =>
+    merges.push({ s: { r: sr, c: sc }, e: { r: er, c: ec } });
+
+  let row = 0;
+
+  setCell(ws, 0, row, 'SVAAS INFRAMAX SOLUTIONS OPC PVT LTD', {
+    fill: { fgColor: { rgb: '1E3A5F' } },
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 14 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  });
+  merge(0, NUM_COLS - 1, row, row); row++;
+
+  setCell(ws, 0, row, `ALL SITES DPR SUMMARY — ${monthName.toUpperCase()} ${year}`, {
+    fill: { fgColor: { rgb: '2E5F9E' } },
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  });
+  merge(0, NUM_COLS - 1, row, row); row++;
+  row++; // spacer
+
+  const hdrS = {
+    fill: { fgColor: { rgb: '344D6E' } },
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+    alignment: { horizontal: 'center' as const, vertical: 'center' as const },
+  };
+  setCell(ws, COL_SITE, row, 'SITE', { ...hdrS, alignment: { horizontal: 'left', vertical: 'center' } });
+  for (let d = 1; d <= daysInMonth; d++) setCell(ws, d, row, d, hdrS);
+  setCell(ws, COL_TOTAL, row, 'TOTAL', { ...hdrS, fill: { fgColor: { rgb: '1E3A5F' } } });
+  row++;
+
+  const colTotals = new Array(NUM_COLS).fill(0);
+  const border = {
+    top:    { style: 'thin', color: { rgb: 'DDDDDD' } },
+    bottom: { style: 'thin', color: { rgb: 'DDDDDD' } },
+    left:   { style: 'thin', color: { rgb: 'DDDDDD' } },
+    right:  { style: 'thin', color: { rgb: 'DDDDDD' } },
+  };
+
+  for (let si = 0; si < sites.length; si++) {
+    const { name, entries } = sites[si];
+    const dayMap = new Map<number, number>();
+    entries.forEach(e => {
+      const d = new Date(e.date);
+      if (d.getMonth() + 1 === month && d.getFullYear() === year) {
+        const day = d.getDate();
+        const tot = (e.mm16 || 0) + (e.mm20 || 0) + (e.mm25 || 0) + (e.mm32 || 0);
+        dayMap.set(day, (dayMap.get(day) ?? 0) + tot);
+      }
+    });
+
+    const bg = si % 2 === 0 ? 'FFFFFF' : 'F8F8F8';
+    const cS = (bold = false) => ({
+      fill: { fgColor: { rgb: bg } },
+      font: { bold, sz: 10 },
+      alignment: { horizontal: 'center' as const, vertical: 'center' as const },
+      border,
+    });
+
+    setCell(ws, COL_SITE, row, name, { ...cS(), alignment: { horizontal: 'left', vertical: 'center' } });
+    let rowTotal = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const val = dayMap.get(d) ?? 0;
+      rowTotal += val;
+      colTotals[d] += val;
+      setCell(ws, d, row, val > 0 ? val : '', cS());
+    }
+    colTotals[COL_TOTAL] += rowTotal;
+    setCell(ws, COL_TOTAL, row, rowTotal, cS(true));
+    row++;
+  }
+
+  const totS = {
+    fill: { fgColor: { rgb: '344D6E' } },
+    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+    alignment: { horizontal: 'center' as const, vertical: 'center' as const },
+  };
+  setCell(ws, COL_SITE, row, 'TOTAL', { ...totS, alignment: { horizontal: 'left', vertical: 'center' } });
+  for (let d = 1; d <= daysInMonth; d++)
+    setCell(ws, d, row, colTotals[d] || '', totS);
+  setCell(ws, COL_TOTAL, row, colTotals[COL_TOTAL], { ...totS, fill: { fgColor: { rgb: '1E3A5F' } } });
+  row++;
+
+  ws['!ref'] = `A1:${colLetter(NUM_COLS - 1)}${row}`;
+  ws['!merges'] = merges;
+  ws['!cols'] = [{ wch: 25 }, ...new Array(daysInMonth).fill({ wch: 5 }), { wch: 10 }];
+  ws['!rows'] = [
+    { hpt: 30 }, { hpt: 22 }, { hpt: 6 }, { hpt: 20 },
+    ...sites.map(() => ({ hpt: 18 })),
+    { hpt: 20 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `Summary ${monthName} ${year}`);
+  XLSX.writeFile(wb, `DPR_All_Sites_${monthName}_${year}.xlsx`);
+}
+
 export function generateDPRSummary(
   entries: DPREntry[],
   projectName: string,

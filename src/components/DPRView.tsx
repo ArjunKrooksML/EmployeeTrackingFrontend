@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import type { Project, DPREntry } from '../lib/api';
 import { useToast } from './Toast';
 import Pagination from './Pagination';
-import { generateDPRSummary } from '../utils/dprExcel';
+import { generateDPRSummary, generateAllSitesSummary } from '../utils/dprExcel';
 import { MONTHS, currentYear, YEARS } from '../utils/helpers';
 
 const PAGE_SIZE = 20;
@@ -52,6 +52,11 @@ export default function DPRView() {
   const [exportMonth, setExportMonth] = useState(new Date().getMonth() + 1);
   const [exportYear, setExportYear] = useState(currentYear);
   const [exporting, setExporting] = useState(false);
+
+  const [summaryModal, setSummaryModal] = useState(false);
+  const [summaryMonth, setSummaryMonth] = useState(new Date().getMonth() + 1);
+  const [summaryYear, setSummaryYear] = useState(currentYear);
+  const [summarizing, setSummarizing] = useState(false);
 
   useEffect(() => {
     api.dpr.projects()
@@ -104,6 +109,23 @@ export default function DPRView() {
     }
   };
 
+  const handleSummaryDownload = async () => {
+    setSummarizing(true);
+    try {
+      const results = await Promise.all(
+        projects.map(p => api.dpr.monthly(p.project_id, summaryMonth, summaryYear)
+          .then(data => ({ name: p.name, entries: data.items }))
+        )
+      );
+      generateAllSitesSummary(results, summaryMonth, summaryYear);
+      setSummaryModal(false);
+    } catch {
+      toast.error('Failed to generate summary');
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
   const handleDownload = async () => {
     if (!selected) return;
     setExporting(true);
@@ -131,9 +153,17 @@ export default function DPRView() {
     <>
       {!selected ? (
         <div>
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-slate-800">Daily Progress Reports</h2>
-            <p className="text-sm text-slate-500 mt-1">Select a project to view or add DPR entries</p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Daily Progress Reports</h2>
+              <p className="text-sm text-slate-500 mt-1">Select a project to view or add DPR entries</p>
+            </div>
+            {projects.length > 0 && (
+              <button onClick={() => setSummaryModal(true)}
+                className="flex items-center gap-1.5 text-sm text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition">
+                <Download size={15} /> All Sites Summary
+              </button>
+            )}
           </div>
 
           {!loading && projects.length > 0 && (
@@ -306,6 +336,46 @@ export default function DPRView() {
               <button onClick={handleSubmit} disabled={submitting}
                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
                 {submitting ? 'Saving…' : (editEntry ? 'Update' : 'Save')}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* All-sites summary modal */}
+      {summaryModal && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 w-full max-w-xs relative">
+            <button onClick={() => setSummaryModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <X size={18} />
+            </button>
+            <h3 className="text-base font-semibold text-slate-800 mb-1">All Sites DPR Summary</h3>
+            <p className="text-xs text-slate-500 mb-5">Download a summary of all {projects.length} sites for a given month.</p>
+            <div className="space-y-3 mb-6">
+              <div>
+                <label className="text-xs font-medium text-slate-600 block mb-1">Month</label>
+                <select value={summaryMonth} onChange={e => setSummaryMonth(Number(e.target.value))}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600 block mb-1">Year</label>
+                <select value={summaryYear} onChange={e => setSummaryYear(Number(e.target.value))}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setSummaryModal(false)}
+                className="flex-1 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+                Cancel
+              </button>
+              <button onClick={handleSummaryDownload} disabled={summarizing}
+                className="flex-1 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 transition flex items-center justify-center gap-1.5">
+                <Download size={14} /> {summarizing ? 'Generating…' : 'Download'}
               </button>
             </div>
           </div>

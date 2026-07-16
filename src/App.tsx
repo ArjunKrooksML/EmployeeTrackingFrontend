@@ -1,24 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu, Package, FileText, Receipt } from 'lucide-react';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import NotificationBell from './components/NotificationBell';
-import EmployeeManagement from './components/EmployeeManagement';
-import ProjectManagement from './components/ProjectManagement';
-import TaskManagement from './components/TaskManagement';
-import AttendanceManagement from './components/AttendanceManagement';
-import LeaveManagement from './components/LeaveManagement';
-import AdminDashboard from './components/AdminDashboard';
-import Payroll from './components/Payroll';
-import OrdersView from './components/OrdersView';
-import DPRView from './components/DPRView';
-import ExpensesManagement from './components/ExpensesManagement';
 import Login from './components/Login';
 import { api } from './lib/api';
 import type { AdminUser } from './lib/api';
-import ChangePasswordModal from './components/ChangePasswordModal';
-import ChatBot from './components/ChatBot';
+
+const EmployeeManagement = lazy(() => import('./components/EmployeeManagement'));
+const ProjectManagement = lazy(() => import('./components/ProjectManagement'));
+const TaskManagement = lazy(() => import('./components/TaskManagement'));
+const AttendanceManagement = lazy(() => import('./components/AttendanceManagement'));
+const LeaveManagement = lazy(() => import('./components/LeaveManagement'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const Payroll = lazy(() => import('./components/Payroll'));
+const OrdersView = lazy(() => import('./components/OrdersView'));
+const DPRView = lazy(() => import('./components/DPRView'));
+const ExpensesManagement = lazy(() => import('./components/ExpensesManagement'));
+const ChangePasswordModal = lazy(() => import('./components/ChangePasswordModal'));
+const ChatBot = lazy(() => import('./components/ChatBot'));
 
 type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders' | 'dpr' | 'expenses';
 type UserT = AdminUser;
@@ -43,6 +44,12 @@ const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
   { key: 'dpr', icon: <FileText size={20} />, label: 'DPR' },
   { key: 'expenses', icon: <Receipt size={20} />, label: 'Expenses' },
 ];
+
+const TabSpinner = () => (
+  <div className="flex items-center justify-center h-48">
+    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-500" />
+  </div>
+);
 
 function App() {
   const [tab, setTab] = useState<Tab>('dashboard');
@@ -118,12 +125,10 @@ function App() {
     <ToastProvider>
       <ConfirmProvider>
         <div className="min-h-screen bg-slate-50 relative">
-          {/* Liquid glass background orbs */}
-          <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-            <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-indigo-400/10 rounded-full blur-3xl" />
-            <div className="absolute top-1/2 -left-40 w-96 h-96 bg-violet-400/8 rounded-full blur-3xl" />
-            <div className="absolute -bottom-40 right-1/3 w-[450px] h-[450px] bg-blue-400/7 rounded-full blur-3xl" />
-          </div>
+          <div
+            className="fixed inset-0 pointer-events-none z-0"
+            style={{ background: 'radial-gradient(ellipse 55% 45% at 95% -5%, rgba(99,102,241,0.12) 0%, transparent 100%), radial-gradient(ellipse 50% 40% at -5% 55%, rgba(139,92,246,0.08) 0%, transparent 100%), radial-gradient(ellipse 50% 40% at 65% 105%, rgba(59,130,246,0.07) 0%, transparent 100%)' }}
+          />
           {/* Top nav */}
           <nav className="relative z-20 bg-[#0f0f18] text-white border-b border-white/5">
             <div className="px-4 sm:px-8 lg:px-12 flex justify-between items-center h-14">
@@ -135,7 +140,6 @@ function App() {
                   <img src="/svaas.png" alt="SVAAS logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover shadow-lg border border-white/40" />
                   <h1 className="text-[10px] sm:text-lg lg:text-2xl font-semibold tracking-tight leading-tight">SVAAS Inframax Solutions OPC Pvt Ltd</h1>
                 </button>
-
               </div>
               <div className="flex items-center gap-2">
                 <NotificationBell />
@@ -155,20 +159,14 @@ function App() {
                       <button
                         type="button"
                         className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-t-xl"
-                        onClick={() => {
-                          setShowMenu(false);
-                          setShowProfile(true);
-                        }}
+                        onClick={() => { setShowMenu(false); setShowProfile(true); }}
                       >
                         View Profile
                       </button>
                       <button
                         type="button"
                         className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2"
-                        onClick={() => {
-                          setShowMenu(false);
-                          setShowChangePass(true);
-                        }}
+                        onClick={() => { setShowMenu(false); setShowChangePass(true); }}
                       >
                         Change Password
                       </button>
@@ -213,25 +211,27 @@ function App() {
 
             {/* Main content */}
             <main className="flex-1 w-full overflow-hidden px-3 sm:px-8 py-6">
-              <AnimatePresence mode="wait">
+              <AnimatePresence>
                 <motion.div
                   key={`${tab}-${tabKey}`}
-                  className="relative z-10 max-w-5xl mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-lg shadow-black/5 border border-white/70 p-3 sm:p-6 overflow-x-auto"
+                  className="relative z-10 max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-3 sm:p-6 overflow-x-auto"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
                 >
-                  {tab === 'dashboard' && <AdminDashboard />}
-                  {tab === 'employees' && <EmployeeManagement />}
-                  {tab === 'projects' && <ProjectManagement />}
-                  {tab === 'tasks' && <TaskManagement />}
-                  {tab === 'attendance' && <AttendanceManagement />}
-                  {tab === 'leaves' && <LeaveManagement />}
-                  {tab === 'payroll' && <Payroll />}
-                  {tab === 'orders' && <OrdersView />}
-                  {tab === 'dpr' && <DPRView />}
-                  {tab === 'expenses' && <ExpensesManagement />}
+                  <Suspense fallback={<TabSpinner />}>
+                    {tab === 'dashboard' && <AdminDashboard />}
+                    {tab === 'employees' && <EmployeeManagement />}
+                    {tab === 'projects' && <ProjectManagement />}
+                    {tab === 'tasks' && <TaskManagement />}
+                    {tab === 'attendance' && <AttendanceManagement />}
+                    {tab === 'leaves' && <LeaveManagement />}
+                    {tab === 'payroll' && <Payroll />}
+                    {tab === 'orders' && <OrdersView />}
+                    {tab === 'dpr' && <DPRView />}
+                    {tab === 'expenses' && <ExpensesManagement />}
+                  </Suspense>
                 </motion.div>
               </AnimatePresence>
             </main>
@@ -242,7 +242,7 @@ function App() {
             {showDrawer && (
               <div className="fixed inset-0 z-50 md:hidden flex">
                 <motion.div
-                  className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                  className="absolute inset-0 bg-black/50"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   onClick={() => setShowDrawer(false)}
                 />
@@ -271,7 +271,7 @@ function App() {
           <AnimatePresence>
             {showProfile && user && (
               <motion.div
-                className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm px-4"
+                className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/60 px-4"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               >
                 <motion.div
@@ -315,8 +315,10 @@ function App() {
             )}
           </AnimatePresence>
 
-          {showChangePass && <ChangePasswordModal onClose={() => setShowChangePass(false)} />}
-          <ChatBot />
+          <Suspense fallback={null}>
+            {showChangePass && <ChangePasswordModal onClose={() => setShowChangePass(false)} />}
+            <ChatBot />
+          </Suspense>
         </div>
       </ConfirmProvider>
     </ToastProvider>

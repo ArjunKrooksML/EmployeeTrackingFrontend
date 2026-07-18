@@ -27,10 +27,9 @@ export default function ExpensesManagement() {
   const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<ExpenseResp | null>(null);
-  const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'approved' | 'rejected' | 'paid' | null>(null);
   const [remarks, setRemarks] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [markingPaid, setMarkingPaid] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
 
   const load = (pg: number, sf: StatusFilter, ps = pageSize) => {
     setLoading(true);
@@ -51,40 +50,38 @@ export default function ExpensesManagement() {
 
   const openModal = (e: ExpenseResp) => {
     setSelected(e);
-    setReviewAction(null);
+    setConfirmAction(null);
     setRemarks('');
   };
 
-  const closeModal = () => { setSelected(null); setReviewAction(null); setRemarks(''); };
+  const closeModal = () => { setSelected(null); setConfirmAction(null); setRemarks(''); };
 
-  const doMarkPaid = async () => {
-    if (!selected) return;
-    setMarkingPaid(true);
-    try {
-      const updated = await api.expenses.markPaid(selected.id);
-      toast.success('Expense marked as paid');
-      setSelected(updated);
-      load(page, statusFilter);
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to mark as paid');
-    } finally {
-      setMarkingPaid(false);
-    }
+  const openConfirm = (action: 'approved' | 'rejected' | 'paid') => {
+    setConfirmAction(action);
+    setRemarks('');
   };
 
-  const doReview = async (status: 'approved' | 'rejected') => {
-    if (!selected) return;
-    setSubmitting(true);
+  const closeConfirm = () => { setConfirmAction(null); setRemarks(''); };
+
+  const confirmSubmit = async () => {
+    if (!selected || !confirmAction) return;
+    setActionBusy(true);
     try {
-      const updated = await api.expenses.review(selected.id, status, remarks || undefined);
-      toast.success(status === 'approved' ? 'Expense approved' : 'Expense rejected');
+      const updated = confirmAction === 'paid'
+        ? await api.expenses.markPaid(selected.id, remarks || undefined)
+        : await api.expenses.review(selected.id, confirmAction, remarks || undefined);
+      toast.success(
+        confirmAction === 'approved' ? 'Expense approved'
+          : confirmAction === 'rejected' ? 'Expense rejected'
+          : 'Expense marked as paid'
+      );
       setSelected(updated);
-      setReviewAction(null);
+      closeConfirm();
       load(page, statusFilter);
     } catch (e: any) {
       toast.error(e.message || 'Action failed');
     } finally {
-      setSubmitting(false);
+      setActionBusy(false);
     }
   };
 
@@ -128,7 +125,8 @@ export default function ExpensesManagement() {
                   <th className="px-4 py-2.5">Date</th>
                   <th className="px-4 py-2.5">Total</th>
                   <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5 rounded-tr-lg">Payment</th>
+                  <th className="px-4 py-2.5">Payment</th>
+                  <th className="px-4 py-2.5 rounded-tr-lg">Remarks</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -147,6 +145,9 @@ export default function ExpensesManagement() {
                     <td className="px-4 py-3 font-medium text-slate-800">₹{total(e.items).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3">{expBadge(e.status)}</td>
                     <td className="px-4 py-3">{e.status === 'approved' ? paidBadge(e.paid) : <span className="text-slate-300 text-xs">—</span>}</td>
+                    <td className="px-4 py-3 max-w-[180px] truncate text-slate-500" title={e.remarks || ''}>
+                      {e.remarks || <span className="text-slate-300 text-xs">—</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -239,81 +240,81 @@ export default function ExpensesManagement() {
                   <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-3 py-2">{selected.remarks}</p>
                 </div>
               )}
-
-              {/* Review remarks input */}
-              {reviewAction && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
-                  <textarea
-                    rows={3}
-                    value={remarks}
-                    onChange={e => setRemarks(e.target.value)}
-                    placeholder={reviewAction === 'rejected' ? 'Reason for rejection…' : 'Add a remark…'}
-                    className={`w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none
-                      ${reviewAction === 'rejected' ? 'focus:ring-red-400' : 'focus:ring-green-400'}`}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Modal footer */}
             {selected.status === 'approved' && !selected.paid && (
               <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
                 <button
-                  onClick={doMarkPaid}
-                  disabled={markingPaid}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                  onClick={() => openConfirm('paid')}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
                 >
-                  {markingPaid ? 'Saving…' : 'Mark as Paid'}
+                  Mark as Paid
                 </button>
               </div>
             )}
             {selected.status === 'pending' && (
               <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
-                {!reviewAction ? (
-                  <>
-                    <button
-                      onClick={() => setReviewAction('rejected')}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
-                    >
-                      <XCircle size={15} /> Reject
-                    </button>
-                    <button
-                      onClick={() => setReviewAction('approved')}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
-                    >
-                      <CheckCircle size={15} /> Approve
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => { setReviewAction(null); setRemarks(''); }}
-                      className="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
-                    >
-                      Cancel
-                    </button>
-                    {reviewAction === 'rejected' ? (
-                      <button
-                        onClick={() => doReview('rejected')}
-                        disabled={submitting}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
-                      >
-                        <XCircle size={15} /> {submitting ? 'Rejecting…' : 'Confirm Reject'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => doReview('approved')}
-                        disabled={submitting}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
-                      >
-                        <CheckCircle size={15} /> {submitting ? 'Approving…' : 'Confirm Approve'}
-                      </button>
-                    )}
-                  </>
-                )}
+                <button
+                  onClick={() => openConfirm('rejected')}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
+                >
+                  <XCircle size={15} /> Reject
+                </button>
+                <button
+                  onClick={() => openConfirm('approved')}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
+                >
+                  <CheckCircle size={15} /> Approve
+                </button>
               </div>
             )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {selected && confirmAction && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-800">
+                {confirmAction === 'approved' ? 'Approve Expense'
+                  : confirmAction === 'rejected' ? 'Reject Expense'
+                  : 'Mark as Paid'}
+              </h3>
+              <button onClick={closeConfirm} className="text-slate-400 hover:text-slate-600"><X size={16} /></button>
+            </div>
+            <div className="px-5 py-4">
+              <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
+              <textarea
+                rows={3}
+                autoFocus
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
+                placeholder={confirmAction === 'rejected' ? 'Reason for rejection…' : 'Add a remark…'}
+                className={`w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none
+                  ${confirmAction === 'rejected' ? 'focus:ring-red-400' : confirmAction === 'approved' ? 'focus:ring-green-400' : 'focus:ring-blue-400'}`}
+              />
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
+              <button
+                onClick={closeConfirm}
+                className="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSubmit}
+                disabled={actionBusy}
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 transition
+                  ${confirmAction === 'rejected' ? 'bg-red-600 hover:bg-red-700' : confirmAction === 'approved' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+              >
+                {confirmAction === 'rejected' && <XCircle size={15} />}
+                {confirmAction === 'approved' && <CheckCircle size={15} />}
+                {actionBusy ? 'Saving…' : 'Confirm'}
+              </button>
+            </div>
           </div>
         </div>,
         document.body

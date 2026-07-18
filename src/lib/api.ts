@@ -487,8 +487,8 @@ export const api = {
     get: (id: number): Promise<ExpenseResp> => apiRequest(`/admin/expenses/${id}`),
     review: (id: number, status: string, remarks?: string): Promise<ExpenseResp> =>
       apiRequest(`/admin/expenses/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, remarks }) }),
-    markPaid: (id: number): Promise<ExpenseResp> =>
-      apiRequest(`/admin/expenses/${id}/paid`, { method: 'PUT' }),
+    markPaid: (id: number, remarks?: string): Promise<ExpenseResp> =>
+      apiRequest(`/admin/expenses/${id}/paid`, { method: 'PUT', body: JSON.stringify({ remarks }) }),
   },
   salary: {
     getSaved: (month: number, year: number): Promise<SalaryResult[]> =>

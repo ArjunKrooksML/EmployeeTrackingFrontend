@@ -26,6 +26,7 @@ export interface Employee {
   generated_password?: string;
   created_at?: string;
   updated_at?: string;
+  profile_pic_url?: string | null;
 }
 
 export interface SalaryResult {
@@ -147,6 +148,8 @@ export interface ExpenseResp {
   attachments?: { url: string; name: string }[];
   status: 'pending' | 'approved' | 'rejected';
   paid: boolean;
+  paid_amount: number;
+  balance: number;
   remarks?: string;
   created_at: string;
 }
@@ -487,6 +490,8 @@ export const api = {
     get: (id: number): Promise<ExpenseResp> => apiRequest(`/admin/expenses/${id}`),
     review: (id: number, status: string, remarks?: string): Promise<ExpenseResp> =>
       apiRequest(`/admin/expenses/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, remarks }) }),
+    recordPayment: (id: number, amount: number, remarks?: string): Promise<ExpenseResp> =>
+      apiRequest(`/admin/expenses/${id}/payment`, { method: 'PUT', body: JSON.stringify({ amount, remarks }) }),
     markPaid: (id: number, remarks?: string): Promise<ExpenseResp> =>
       apiRequest(`/admin/expenses/${id}/paid`, { method: 'PUT', body: JSON.stringify({ remarks }) }),
   },

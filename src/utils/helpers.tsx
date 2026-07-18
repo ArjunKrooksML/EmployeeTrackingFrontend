@@ -30,8 +30,8 @@ export function expBadge(s: string) {
   return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">Pending</span>;
 }
 
-export function paidBadge(paid: boolean) {
-  return paid
-    ? <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">Paid</span>
-    : <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-500">Not Paid Yet</span>;
+export function paidBadge(paid: boolean, paidAmount?: number) {
+  if (paid) return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">Paid</span>;
+  if (paidAmount) return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">Partially Paid</span>;
+  return <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-500 whitespace-nowrap">Not Paid Yet</span>;
 }

@@ -25,8 +25,12 @@ export default function EmployeeOverview({ employee, onClose }: Props) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-lg font-bold shrink-0">
-              {initials}
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-lg font-bold shrink-0 overflow-hidden">
+              {employee.profile_pic_url ? (
+                <img src={employee.profile_pic_url} alt="" className="h-12 w-12 object-cover" />
+              ) : (
+                initials
+              )}
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900">{employee.employee_name}</h2>

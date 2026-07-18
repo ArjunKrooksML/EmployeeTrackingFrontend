@@ -27,8 +27,9 @@ export default function ExpensesManagement() {
   const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<ExpenseResp | null>(null);
-  const [confirmAction, setConfirmAction] = useState<'approved' | 'rejected' | 'paid' | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'approved' | 'rejected' | 'paid' | 'payment' | null>(null);
   const [remarks, setRemarks] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
   const [actionBusy, setActionBusy] = useState(false);
 
   const load = (pg: number, sf: StatusFilter, ps = pageSize) => {
@@ -56,23 +57,27 @@ export default function ExpensesManagement() {
 
   const closeModal = () => { setSelected(null); setConfirmAction(null); setRemarks(''); };
 
-  const openConfirm = (action: 'approved' | 'rejected' | 'paid') => {
+  const openConfirm = (action: 'approved' | 'rejected' | 'paid' | 'payment') => {
     setConfirmAction(action);
     setRemarks('');
+    if (action === 'payment' && selected) setPaymentAmount(String(selected.balance));
   };
 
-  const closeConfirm = () => { setConfirmAction(null); setRemarks(''); };
+  const closeConfirm = () => { setConfirmAction(null); setRemarks(''); setPaymentAmount(''); };
 
   const confirmSubmit = async () => {
     if (!selected || !confirmAction) return;
     setActionBusy(true);
     try {
-      const updated = confirmAction === 'paid'
+      const updated = confirmAction === 'payment'
+        ? await api.expenses.recordPayment(selected.id, Number(paymentAmount), remarks || undefined)
+        : confirmAction === 'paid'
         ? await api.expenses.markPaid(selected.id, remarks || undefined)
         : await api.expenses.review(selected.id, confirmAction, remarks || undefined);
       toast.success(
         confirmAction === 'approved' ? 'Expense approved'
           : confirmAction === 'rejected' ? 'Expense rejected'
+          : confirmAction === 'payment' ? 'Payment recorded'
           : 'Expense marked as paid'
       );
       setSelected(updated);
@@ -126,6 +131,7 @@ export default function ExpensesManagement() {
                   <th className="px-4 py-2.5">Total</th>
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Payment</th>
+                  <th className="px-4 py-2.5">Balance</th>
                   <th className="px-4 py-2.5 rounded-tr-lg">Remarks</th>
                 </tr>
               </thead>
@@ -144,7 +150,10 @@ export default function ExpensesManagement() {
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-800">₹{total(e.items).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3">{expBadge(e.status)}</td>
-                    <td className="px-4 py-3">{e.status === 'approved' ? paidBadge(e.paid) : <span className="text-slate-300 text-xs">—</span>}</td>
+                    <td className="px-4 py-3">{e.status === 'approved' ? paidBadge(e.paid, e.paid_amount) : <span className="text-slate-300 text-xs">—</span>}</td>
+                    <td className="px-4 py-3 font-medium text-slate-700">
+                      {e.status === 'approved' ? (e.paid ? <span className="text-slate-300">—</span> : `₹${e.balance.toLocaleString('en-IN')}`) : <span className="text-slate-300 text-xs">—</span>}
+                    </td>
                     <td className="px-4 py-3 max-w-[180px] truncate text-slate-500" title={e.remarks || ''}>
                       {e.remarks || <span className="text-slate-300 text-xs">—</span>}
                     </td>
@@ -230,10 +239,16 @@ export default function ExpensesManagement() {
                 {selected.status === 'approved' && (
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment:</p>
-                    {paidBadge(selected.paid)}
+                    {paidBadge(selected.paid, selected.paid_amount)}
                   </div>
                 )}
               </div>
+              {selected.status === 'approved' && !selected.paid && (
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-slate-500">Paid: <span className="font-medium text-slate-800">₹{selected.paid_amount.toLocaleString('en-IN')}</span></span>
+                  <span className="text-slate-500">Balance: <span className="font-medium text-slate-800">₹{selected.balance.toLocaleString('en-IN')}</span></span>
+                </div>
+              )}
               {selected.remarks && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Remarks</p>
@@ -244,7 +259,13 @@ export default function ExpensesManagement() {
 
             {/* Modal footer */}
             {selected.status === 'approved' && !selected.paid && (
-              <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
+              <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button
+                  onClick={() => openConfirm('payment')}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
+                >
+                  Record Payment
+                </button>
                 <button
                   onClick={() => openConfirm('paid')}
                   className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
@@ -281,21 +302,40 @@ export default function ExpensesManagement() {
               <h3 className="text-sm font-semibold text-slate-800">
                 {confirmAction === 'approved' ? 'Approve Expense'
                   : confirmAction === 'rejected' ? 'Reject Expense'
+                  : confirmAction === 'payment' ? 'Record Payment'
                   : 'Mark as Paid'}
               </h3>
               <button onClick={closeConfirm} className="text-slate-400 hover:text-slate-600"><X size={16} /></button>
             </div>
-            <div className="px-5 py-4">
-              <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
-              <textarea
-                rows={3}
-                autoFocus
-                value={remarks}
-                onChange={e => setRemarks(e.target.value)}
-                placeholder={confirmAction === 'rejected' ? 'Reason for rejection…' : 'Add a remark…'}
-                className={`w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none
-                  ${confirmAction === 'rejected' ? 'focus:ring-red-400' : confirmAction === 'approved' ? 'focus:ring-green-400' : 'focus:ring-blue-400'}`}
-              />
+            <div className="px-5 py-4 space-y-3">
+              {confirmAction === 'payment' && selected && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Amount (₹) <span className="text-slate-400 font-normal">— balance ₹{selected.balance.toLocaleString('en-IN')}</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={selected.balance}
+                    autoFocus
+                    value={paymentAmount}
+                    onChange={e => setPaymentAmount(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
+                <textarea
+                  rows={3}
+                  autoFocus={confirmAction !== 'payment'}
+                  value={remarks}
+                  onChange={e => setRemarks(e.target.value)}
+                  placeholder={confirmAction === 'rejected' ? 'Reason for rejection…' : 'Add a remark…'}
+                  className={`w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none
+                    ${confirmAction === 'rejected' ? 'focus:ring-red-400' : confirmAction === 'approved' ? 'focus:ring-green-400' : 'focus:ring-blue-400'}`}
+                />
+              </div>
             </div>
             <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
               <button
@@ -306,7 +346,7 @@ export default function ExpensesManagement() {
               </button>
               <button
                 onClick={confirmSubmit}
-                disabled={actionBusy}
+                disabled={actionBusy || (confirmAction === 'payment' && (!paymentAmount || Number(paymentAmount) <= 0 || (selected ? Number(paymentAmount) > selected.balance : false)))}
                 className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50 transition
                   ${confirmAction === 'rejected' ? 'bg-red-600 hover:bg-red-700' : confirmAction === 'approved' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
               >

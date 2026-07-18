@@ -5,10 +5,9 @@ import { api } from '../lib/api';
 import type { ExpenseResp, ExpItem } from '../lib/api';
 import { useToast } from './Toast';
 import Pagination from './Pagination';
-import { expBadge } from '../utils/helpers';
+import { expBadge, paidBadge } from '../utils/helpers';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
-const PAGE_SIZE = 20;
 const STATUS_TABS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'pending', label: 'Pending' },
@@ -25,15 +24,17 @@ export default function ExpensesManagement() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<ExpenseResp | null>(null);
   const [rejectMode, setRejectMode] = useState(false);
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [markingPaid, setMarkingPaid] = useState(false);
 
-  const load = (pg: number, sf: StatusFilter) => {
+  const load = (pg: number, sf: StatusFilter, ps = pageSize) => {
     setLoading(true);
-    api.expenses.list(pg, PAGE_SIZE, sf === 'all' ? undefined : sf)
+    api.expenses.list(pg, ps, sf === 'all' ? undefined : sf)
       .then(data => {
         setExpenses(data.items);
         setPages(data.pages);
@@ -46,6 +47,7 @@ export default function ExpensesManagement() {
   useEffect(() => { load(1, 'all'); }, []);
 
   const changeTab = (sf: StatusFilter) => { setStatusFilter(sf); setPage(1); load(1, sf); };
+  const changePageSize = (ps: number) => { setPageSize(ps); setPage(1); load(1, statusFilter, ps); };
 
   const openModal = (e: ExpenseResp) => {
     setSelected(e);
@@ -55,6 +57,21 @@ export default function ExpensesManagement() {
 
   const closeModal = () => { setSelected(null); setRejectMode(false); setRemarks(''); };
 
+  const doMarkPaid = async () => {
+    if (!selected) return;
+    setMarkingPaid(true);
+    try {
+      const updated = await api.expenses.markPaid(selected.id);
+      toast.success('Expense marked as paid');
+      setSelected(updated);
+      load(page, statusFilter);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to mark as paid');
+    } finally {
+      setMarkingPaid(false);
+    }
+  };
+
   const doReview = async (status: 'approved' | 'rejected') => {
     if (!selected) return;
     setSubmitting(true);
@@ -63,7 +80,7 @@ export default function ExpensesManagement() {
       toast.success(status === 'approved' ? 'Expense approved' : 'Expense rejected');
       setSelected(updated);
       setRejectMode(false);
-      load(page);
+      load(page, statusFilter);
     } catch (e: any) {
       toast.error(e.message || 'Action failed');
     } finally {
@@ -110,7 +127,8 @@ export default function ExpensesManagement() {
                   <th className="px-4 py-2.5">Title</th>
                   <th className="px-4 py-2.5">Date</th>
                   <th className="px-4 py-2.5">Total</th>
-                  <th className="px-4 py-2.5 rounded-tr-lg">Status</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5 rounded-tr-lg">Payment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -120,7 +138,7 @@ export default function ExpensesManagement() {
                     onClick={() => openModal(e)}
                     className="hover:bg-slate-50 cursor-pointer transition"
                   >
-                    <td className="px-4 py-3 text-slate-400">{(page - 1) * PAGE_SIZE + i + 1}</td>
+                    <td className="px-4 py-3 text-slate-400">{(page - 1) * pageSize + i + 1}</td>
                     <td className="px-4 py-3 font-medium text-slate-800">{e.employee_name || `#${e.employee_id}`}</td>
                     <td className="px-4 py-3 text-slate-600">{e.title}</td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
@@ -128,21 +146,20 @@ export default function ExpensesManagement() {
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-800">₹{total(e.items).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3">{expBadge(e.status)}</td>
+                    <td className="px-4 py-3">{e.status === 'approved' ? paidBadge(e.paid) : <span className="text-slate-300 text-xs">—</span>}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {pages > 1 && (
-            <Pagination
-              page={page}
-              pages={pages}
-              total={totalCount}
-              pageSize={PAGE_SIZE}
-              onPageChange={pg => { setPage(pg); load(pg, statusFilter); }}
-              onPageSizeChange={() => {}}
-            />
-          )}
+          <Pagination
+            page={page}
+            pages={pages}
+            total={totalCount}
+            pageSize={pageSize}
+            onPageChange={pg => { setPage(pg); load(pg, statusFilter); }}
+            onPageSizeChange={changePageSize}
+          />
         </>
       )}
 
@@ -204,9 +221,17 @@ export default function ExpensesManagement() {
               )}
 
               {/* Status / remarks */}
-              <div className="flex items-center gap-2">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status:</p>
-                {expBadge(selected.status)}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status:</p>
+                  {expBadge(selected.status)}
+                </div>
+                {selected.status === 'approved' && (
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment:</p>
+                    {paidBadge(selected.paid)}
+                  </div>
+                )}
               </div>
               {selected.remarks && (
                 <div>
@@ -231,6 +256,17 @@ export default function ExpensesManagement() {
             </div>
 
             {/* Modal footer */}
+            {selected.status === 'approved' && !selected.paid && (
+              <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={doMarkPaid}
+                  disabled={markingPaid}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+                >
+                  {markingPaid ? 'Saving…' : 'Mark as Paid'}
+                </button>
+              </div>
+            )}
             {selected.status === 'pending' && (
               <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
                 {!rejectMode ? (

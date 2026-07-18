@@ -146,6 +146,7 @@ export interface ExpenseResp {
   items: ExpItem[];
   attachments?: { url: string; name: string }[];
   status: 'pending' | 'approved' | 'rejected';
+  paid: boolean;
   remarks?: string;
   created_at: string;
 }
@@ -486,6 +487,8 @@ export const api = {
     get: (id: number): Promise<ExpenseResp> => apiRequest(`/admin/expenses/${id}`),
     review: (id: number, status: string, remarks?: string): Promise<ExpenseResp> =>
       apiRequest(`/admin/expenses/${id}/review`, { method: 'PUT', body: JSON.stringify({ status, remarks }) }),
+    markPaid: (id: number): Promise<ExpenseResp> =>
+      apiRequest(`/admin/expenses/${id}/paid`, { method: 'PUT' }),
   },
   salary: {
     getSaved: (month: number, year: number): Promise<SalaryResult[]> =>

@@ -27,7 +27,7 @@ export default function ExpensesManagement() {
   const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<ExpenseResp | null>(null);
-  const [rejectMode, setRejectMode] = useState(false);
+  const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | null>(null);
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
@@ -51,11 +51,11 @@ export default function ExpensesManagement() {
 
   const openModal = (e: ExpenseResp) => {
     setSelected(e);
-    setRejectMode(false);
+    setReviewAction(null);
     setRemarks('');
   };
 
-  const closeModal = () => { setSelected(null); setRejectMode(false); setRemarks(''); };
+  const closeModal = () => { setSelected(null); setReviewAction(null); setRemarks(''); };
 
   const doMarkPaid = async () => {
     if (!selected) return;
@@ -79,7 +79,7 @@ export default function ExpensesManagement() {
       const updated = await api.expenses.review(selected.id, status, remarks || undefined);
       toast.success(status === 'approved' ? 'Expense approved' : 'Expense rejected');
       setSelected(updated);
-      setRejectMode(false);
+      setReviewAction(null);
       load(page, statusFilter);
     } catch (e: any) {
       toast.error(e.message || 'Action failed');
@@ -240,16 +240,17 @@ export default function ExpensesManagement() {
                 </div>
               )}
 
-              {/* Reject remarks input */}
-              {rejectMode && (
+              {/* Review remarks input */}
+              {reviewAction && (
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
                   <textarea
                     rows={3}
                     value={remarks}
                     onChange={e => setRemarks(e.target.value)}
-                    placeholder="Reason for rejection…"
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                    placeholder={reviewAction === 'rejected' ? 'Reason for rejection…' : 'Add a remark…'}
+                    className={`w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none
+                      ${reviewAction === 'rejected' ? 'focus:ring-red-400' : 'focus:ring-green-400'}`}
                   />
                 </div>
               )}
@@ -269,18 +270,17 @@ export default function ExpensesManagement() {
             )}
             {selected.status === 'pending' && (
               <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
-                {!rejectMode ? (
+                {!reviewAction ? (
                   <>
                     <button
-                      onClick={() => setRejectMode(true)}
+                      onClick={() => setReviewAction('rejected')}
                       className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
                     >
                       <XCircle size={15} /> Reject
                     </button>
                     <button
-                      onClick={() => doReview('approved')}
-                      disabled={submitting}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+                      onClick={() => setReviewAction('approved')}
+                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
                     >
                       <CheckCircle size={15} /> Approve
                     </button>
@@ -288,18 +288,28 @@ export default function ExpensesManagement() {
                 ) : (
                   <>
                     <button
-                      onClick={() => setRejectMode(false)}
+                      onClick={() => { setReviewAction(null); setRemarks(''); }}
                       className="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={() => doReview('rejected')}
-                      disabled={submitting}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
-                    >
-                      <XCircle size={15} /> {submitting ? 'Rejecting…' : 'Confirm Reject'}
-                    </button>
+                    {reviewAction === 'rejected' ? (
+                      <button
+                        onClick={() => doReview('rejected')}
+                        disabled={submitting}
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
+                      >
+                        <XCircle size={15} /> {submitting ? 'Rejecting…' : 'Confirm Reject'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => doReview('approved')}
+                        disabled={submitting}
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+                      >
+                        <CheckCircle size={15} /> {submitting ? 'Approving…' : 'Confirm Approve'}
+                      </button>
+                    )}
                   </>
                 )}
               </div>

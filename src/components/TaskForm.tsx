@@ -8,7 +8,7 @@ const INPUT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-
 const SELECT = 'w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent focus:bg-white transition';
 const LABEL = 'block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide';
 
-const TASK_TYPES = ['Tools', 'Coupler Supply', 'Machine Mobilization', 'Machine Demobilization', 'Samples Testing'];
+const TASK_TYPES = ['Tools', 'Coupler Supply', 'Machine Mobilization', 'Machine Demobilization', 'Samples Testing', 'Others'];
 const TOOLS_TYPES = ['Chasers', 'Rebar Caps', 'Forging Dyes', 'Gloves', 'Hydraulic Oil', 'Miscellaneous'];
 
 interface TaskFormProps { task: Task | null; employees: Employee[]; projects: Project[]; onClose: () => void; }

@@ -20,6 +20,7 @@ export default function POForm({ projects, editPO, onClose, onSaved }: Props) {
   const [standaloneProjectName, setStandaloneProjectName] = useState('');
   const [standaloneClientName, setStandaloneClientName] = useState('');
   const [items, setItems] = useState([{ size: SIZES[0], quantity: '' }]);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function POForm({ projects, editPO, onClose, onSaved }: Props) {
       setPoNumber(editPO.po_number);
     }
     setItems(editPO.items.map(i => ({ size: i.size, quantity: String(i.quantity) })));
+    setDate(editPO.date);
   }, [editPO, projects]);
 
   const prefix = selProject?.po_prefix;
@@ -75,6 +77,7 @@ export default function POForm({ projects, editPO, onClose, onSaved }: Props) {
       const payload = {
         po_number: finalPO.trim(),
         project_id: projectId,
+        date,
         items: validItems.map(i => ({ size: i.size, quantity: Number(i.quantity) })),
       };
 
@@ -163,6 +166,12 @@ export default function POForm({ projects, editPO, onClose, onSaved }: Props) {
               </div>
             </div>
           )}
+
+          {/* Date */}
+          <div>
+            <label className={LABEL}>PO Date <span className="text-red-400 normal-case tracking-normal">*</span></label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className={INPUT} />
+          </div>
 
           {/* Items */}
           <div className="space-y-3">

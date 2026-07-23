@@ -67,6 +67,7 @@ export interface PurchaseOrder {
   po_number: string;
   project_id?: number | null;
   project_name?: string | null;
+  date: string;
   created_at: string;
   items: POItem[];
 }
@@ -77,6 +78,7 @@ export interface SupplyOrder {
   po_number: string;
   invoice_number?: string | null;
   project_name?: string | null;
+  date: string;
   created_at: string;
   items: SOItem[];
 }
@@ -128,8 +130,32 @@ export interface DPREntry {
   mm16: number;
   mm20: number;
   mm25: number;
+  mm28: number;
   mm32: number;
+  mm40: number;
   operator_name: string;
+  description?: string;
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface FactoryDPREntry {
+  id: number;
+  date: string;
+  mm16: number;
+  mm20: number;
+  mm25: number;
+  mm28: number;
+  mm32: number;
+  mm40: number;
+  r20_16: number;
+  r25_16: number;
+  r25_20: number;
+  r32_20: number;
+  r32_16: number;
+  r32_25: number;
+  r40_25: number;
+  r40_32: number;
   description?: string;
   uploaded_by: string;
   created_at: string;
@@ -457,9 +483,9 @@ export const api = {
   },
   orders: {
     listPOs: (): Promise<PurchaseOrder[]> => apiRequest('/orders/po'),
-    createPO: (data: { po_number: string; project_id?: number | null; items: { size: string; quantity: number }[] }): Promise<PurchaseOrder> =>
+    createPO: (data: { po_number: string; project_id?: number | null; date: string; items: { size: string; quantity: number }[] }): Promise<PurchaseOrder> =>
       apiRequest('/orders/po', { method: 'POST', body: JSON.stringify(data) }),
-    updatePO: (id: number, data: { po_number: string; project_id?: number | null; items: { size: string; quantity: number }[] }): Promise<PurchaseOrder> =>
+    updatePO: (id: number, data: { po_number: string; project_id?: number | null; date: string; items: { size: string; quantity: number }[] }): Promise<PurchaseOrder> =>
       apiRequest(`/orders/po/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deletePO: (id: number): Promise<void> => apiRequest(`/orders/po/${id}`, { method: 'DELETE' }),
     getPOsByProject: (projectId: number): Promise<PurchaseOrder[]> => apiRequest(`/orders/po/by-project/${projectId}`),
@@ -467,9 +493,9 @@ export const api = {
     getPOSummary: (poId: number, excludeSo?: number): Promise<POSizeSummary[]> =>
       apiRequest(`/orders/po/${poId}/summary${excludeSo ? `?exclude_so=${excludeSo}` : ''}`),
     listSOs: (): Promise<SupplyOrder[]> => apiRequest('/orders/so'),
-    createSO: (data: { po_id: number; invoice_number?: string | null; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
+    createSO: (data: { po_id: number; invoice_number?: string | null; date: string; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
       apiRequest('/orders/so', { method: 'POST', body: JSON.stringify(data) }),
-    updateSO: (id: number, data: { po_id: number; invoice_number?: string | null; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
+    updateSO: (id: number, data: { po_id: number; invoice_number?: string | null; date: string; items: { size: string; supplied_qty: number; balance_qty: number }[] }): Promise<SupplyOrder> =>
       apiRequest(`/orders/so/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteSO: (id: number): Promise<void> => apiRequest(`/orders/so/${id}`, { method: 'DELETE' }),
   },
@@ -483,6 +509,14 @@ export const api = {
       apiRequest(`/dpr/${projectId}`, { method: 'POST', body: JSON.stringify(data) }),
     update: (entryId: number, data: Omit<DPREntry, 'id' | 'project_id' | 'uploaded_by' | 'created_at'>): Promise<DPREntry> =>
       apiRequest(`/dpr/${entryId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    factoryList: (page = 1, pageSize = 200): Promise<PaginatedResponse<FactoryDPREntry>> =>
+      apiRequest(`/dpr/factory?page=${page}&page_size=${pageSize}`),
+    factoryMonthly: (month: number, year: number): Promise<PaginatedResponse<FactoryDPREntry>> =>
+      apiRequest(`/dpr/factory?month=${month}&year=${year}&page_size=50`),
+    factoryCreate: (data: Omit<FactoryDPREntry, 'id' | 'uploaded_by' | 'created_at'>): Promise<FactoryDPREntry> =>
+      apiRequest('/dpr/factory', { method: 'POST', body: JSON.stringify(data) }),
+    factoryUpdate: (entryId: number, data: Omit<FactoryDPREntry, 'id' | 'uploaded_by' | 'created_at'>): Promise<FactoryDPREntry> =>
+      apiRequest(`/dpr/factory/${entryId}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
   expenses: {
     list: (page = 1, pageSize = 20, status?: string): Promise<PaginatedResponse<ExpenseResp>> =>

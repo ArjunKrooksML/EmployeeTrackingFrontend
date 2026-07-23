@@ -26,6 +26,7 @@ export default function SOForm({ projects, editSO, editPO, onClose, onSaved }: P
   const [summary, setSummary] = useState<POSizeSummary[]>([]);
   const [supplyQtys, setSupplyQtys] = useState<Record<string, string>>({});
   const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [loadingPOs, setLoadingPOs] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -38,6 +39,7 @@ export default function SOForm({ projects, editSO, editPO, onClose, onSaved }: P
   useEffect(() => {
     if (!editSO || !editPO) return;
     setInvoiceNumber(editSO.invoice_number || '');
+    setDate(editSO.date);
     setLoadingSummary(true);
     api.orders.getPOSummary(editPO.id, editSO.id)
       .then(s => {
@@ -93,7 +95,7 @@ export default function SOForm({ projects, editSO, editPO, onClose, onSaved }: P
     if (over) { toast.error(`Supplied qty exceeds balance for ${over.size}`); return; }
     setLoading(true);
     try {
-      const payload = { po_id: resolvedPoId, invoice_number: invoiceNumber.trim() || null, items };
+      const payload = { po_id: resolvedPoId, invoice_number: invoiceNumber.trim() || null, date, items };
       if (editSO) await api.orders.updateSO(editSO.id, payload);
       else await api.orders.createSO(payload);
       toast.success(editSO ? 'Supply order updated' : 'Supply order created');
@@ -153,15 +155,22 @@ export default function SOForm({ projects, editSO, editPO, onClose, onSaved }: P
             )}
           </div>
 
-          {/* Invoice number */}
-          <div>
-            <label className={LABEL}>Invoice Number <span className="text-slate-400 normal-case font-normal tracking-normal">(optional)</span></label>
-            <input
-              value={invoiceNumber}
-              onChange={e => setInvoiceNumber(e.target.value)}
-              placeholder="e.g. INV-2026-001"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent focus:bg-white transition placeholder-slate-400"
-            />
+          {/* Invoice number & date */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Invoice Number <span className="text-slate-400 normal-case font-normal tracking-normal">(optional)</span></label>
+              <input
+                value={invoiceNumber}
+                onChange={e => setInvoiceNumber(e.target.value)}
+                placeholder="e.g. INV-2026-001"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent focus:bg-white transition placeholder-slate-400"
+              />
+            </div>
+            <div>
+              <label className={LABEL}>SO Date <span className="text-red-400 normal-case tracking-normal">*</span></label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent focus:bg-white transition" />
+            </div>
           </div>
 
           {loadingSummary && (

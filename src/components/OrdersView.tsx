@@ -186,7 +186,7 @@ export default function OrdersView() {
                       <td className="px-4 py-3 text-center">
                         <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{po.items.length}</span>
                       </td>
-                      <td className="px-4 py-3 text-slate-500 text-xs">{fmt(po.created_at)}</td>
+                      <td className="px-4 py-3 text-slate-500 text-xs">{fmt(po.date)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={e => { e.stopPropagation(); setEditingPO(po); setShowPOForm(true); }}
@@ -230,7 +230,7 @@ export default function OrdersView() {
                     <tr key={so.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => setSelectedSO(so)}>
                       <td className="px-4 py-3 font-semibold text-violet-700 text-xs">SO-{so.id}</td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-600">{so.po_number}</td>
-                      <td className="px-4 py-3 text-slate-500 text-xs">{fmt(so.created_at)}</td>
+                      <td className="px-4 py-3 text-slate-500 text-xs">{fmt(so.date)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={e => { e.stopPropagation(); setEditingSO(so); setShowSOForm(true); }}

@@ -60,7 +60,7 @@ export function generateAllSitesSummary(
       const d = new Date(e.date);
       if (d.getMonth() + 1 === month && d.getFullYear() === year) {
         const day = d.getDate();
-        const tot = (e.mm16 || 0) + (e.mm20 || 0) + (e.mm25 || 0) + (e.mm32 || 0);
+        const tot = (e.mm16 || 0) + (e.mm20 || 0) + (e.mm25 || 0) + (e.mm28 || 0) + (e.mm32 || 0) + (e.mm40 || 0);
         dayMap.set(day, (dayMap.get(day) ?? 0) + tot);
       }
     });
@@ -125,8 +125,8 @@ export function generateDPRSummary(
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const COL_SNO = 0, COL_DATE = 1, COL_OPERATOR = 2, COL_DESC = 3;
-  const COL_MM16 = 4, COL_MM20 = 5, COL_MM25 = 6, COL_MM32 = 7, COL_TOTAL = 8;
-  const NUM_COLS = 9;
+  const COL_MM16 = 4, COL_MM20 = 5, COL_MM25 = 6, COL_MM28 = 7, COL_MM32 = 8, COL_MM40 = 9, COL_TOTAL = 10;
+  const NUM_COLS = 11;
 
   const ws: any = {};
   const merges: any[] = [];
@@ -173,11 +173,13 @@ export function generateDPRSummary(
   setCell(ws, COL_MM16, row, '16 MM', hdrS);
   setCell(ws, COL_MM20, row, '20 MM', hdrS);
   setCell(ws, COL_MM25, row, '25 MM', hdrS);
+  setCell(ws, COL_MM28, row, '28 MM', hdrS);
   setCell(ws, COL_MM32, row, '32 MM', hdrS);
+  setCell(ws, COL_MM40, row, '40 MM', hdrS);
   setCell(ws, COL_TOTAL, row, 'TOTAL', { ...hdrS, fill: { fgColor: { rgb: '1E3A5F' } } });
   row++;
 
-  let totMm16 = 0, totMm20 = 0, totMm25 = 0, totMm32 = 0, totTotal = 0;
+  let totMm16 = 0, totMm20 = 0, totMm25 = 0, totMm28 = 0, totMm32 = 0, totMm40 = 0, totTotal = 0;
 
   const border = {
     top:    { style: 'thin', color: { rgb: 'DDDDDD' } },
@@ -188,10 +190,10 @@ export function generateDPRSummary(
 
   for (let i = 0; i < rows.length; i++) {
     const e = rows[i];
-    const v16 = e.mm16 || 0, v20 = e.mm20 || 0, v25 = e.mm25 || 0, v32 = e.mm32 || 0;
-    const tot = v16 + v20 + v25 + v32;
+    const v16 = e.mm16 || 0, v20 = e.mm20 || 0, v25 = e.mm25 || 0, v28 = e.mm28 || 0, v32 = e.mm32 || 0, v40 = e.mm40 || 0;
+    const tot = v16 + v20 + v25 + v28 + v32 + v40;
 
-    totMm16 += v16; totMm20 += v20; totMm25 += v25; totMm32 += v32; totTotal += tot;
+    totMm16 += v16; totMm20 += v20; totMm25 += v25; totMm28 += v28; totMm32 += v32; totMm40 += v40; totTotal += tot;
 
     const bg = tot === 0 ? 'FFFF00' : (i % 2 === 0 ? 'FFFFFF' : 'F8F8F8');
     const cellS = (bold = false) => ({
@@ -211,7 +213,9 @@ export function generateDPRSummary(
     setCell(ws, COL_MM16, row, v16 || '', cellS());
     setCell(ws, COL_MM20, row, v20 || '', cellS());
     setCell(ws, COL_MM25, row, v25 || '', cellS());
+    setCell(ws, COL_MM28, row, v28 || '', cellS());
     setCell(ws, COL_MM32, row, v32 || '', cellS());
+    setCell(ws, COL_MM40, row, v40 || '', cellS());
     setCell(ws, COL_TOTAL, row, tot, cellS(true));
     row++;
   }
@@ -228,13 +232,15 @@ export function generateDPRSummary(
   setCell(ws, COL_MM16, row, totMm16, totS);
   setCell(ws, COL_MM20, row, totMm20, totS);
   setCell(ws, COL_MM25, row, totMm25, totS);
+  setCell(ws, COL_MM28, row, totMm28, totS);
   setCell(ws, COL_MM32, row, totMm32, totS);
+  setCell(ws, COL_MM40, row, totMm40, totS);
   setCell(ws, COL_TOTAL, row, totTotal, { ...totS, fill: { fgColor: { rgb: '1E3A5F' } } });
   row++;
 
   ws['!ref'] = `A1:${colLetter(NUM_COLS - 1)}${row}`;
   ws['!merges'] = merges;
-  ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 18 }, { wch: 22 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 18 }, { wch: 22 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }];
   ws['!rows'] = [
     { hpt: 30 }, { hpt: 22 }, { hpt: 16 }, { hpt: 6 }, { hpt: 20 },
     ...rows.map(() => ({ hpt: 18 })),

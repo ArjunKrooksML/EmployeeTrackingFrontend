@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu, Package, FileText, Receipt } from 'lucide-react';
+import { Users, FolderKanban, ListChecks, UserCircle, X, Calendar, Briefcase, Home, Wallet, Menu, Package, FileText, Receipt, Factory, Wrench } from 'lucide-react';
 import { ToastProvider } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import NotificationBell from './components/NotificationBell';
@@ -17,11 +17,13 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const Payroll = lazy(() => import('./components/Payroll'));
 const OrdersView = lazy(() => import('./components/OrdersView'));
 const DPRView = lazy(() => import('./components/DPRView'));
+const FactoryView = lazy(() => import('./components/FactoryView'));
+const ChasersView = lazy(() => import('./components/ChasersView'));
 const ExpensesManagement = lazy(() => import('./components/ExpensesManagement'));
 const ChangePasswordModal = lazy(() => import('./components/ChangePasswordModal'));
 const ChatBot = lazy(() => import('./components/ChatBot'));
 
-type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders' | 'dpr' | 'expenses';
+type Tab = 'dashboard' | 'employees' | 'projects' | 'tasks' | 'attendance' | 'leaves' | 'payroll' | 'orders' | 'dpr' | 'factory' | 'chasers' | 'expenses';
 type UserT = AdminUser;
 
 function isExpired(token: string | null): boolean {
@@ -42,6 +44,8 @@ const NAV_ITEMS: { key: Tab; icon: React.ReactNode; label: string }[] = [
   { key: 'payroll', icon: <Wallet size={20} />, label: 'Payroll' },
   { key: 'orders', icon: <Package size={20} />, label: 'Orders' },
   { key: 'dpr', icon: <FileText size={20} />, label: 'DPR' },
+  { key: 'factory', icon: <Factory size={20} />, label: 'Factory' },
+  { key: 'chasers', icon: <Wrench size={20} />, label: 'Chasers' },
   { key: 'expenses', icon: <Receipt size={20} />, label: 'Expenses' },
 ];
 
@@ -230,6 +234,8 @@ function App() {
                     {tab === 'payroll' && <Payroll />}
                     {tab === 'orders' && <OrdersView />}
                     {tab === 'dpr' && <DPRView />}
+                    {tab === 'factory' && <FactoryView />}
+                    {tab === 'chasers' && <ChasersView />}
                     {tab === 'expenses' && <ExpensesManagement />}
                   </Suspense>
                 </motion.div>

@@ -161,6 +161,48 @@ export interface FactoryDPREntry {
   created_at: string;
 }
 
+export interface Vendor { id: number; name: string; }
+
+export interface ProcurementItem { size: string; qty_mt: number; }
+
+export interface ProcurementEntry {
+  id: number;
+  date: string;
+  bill_no: string;
+  vendor_id?: number | null;
+  vendor_name?: string | null;
+  heat_no?: string | null;
+  tc_no?: string | null;
+  lot_no?: string | null;
+  test_report_no?: string | null;
+  items: ProcurementItem[];
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface ChaserEntry {
+  id: number;
+  date: string;
+  entry_type: 'issue' | 'stock';
+  vendor?: string | null;
+  project_id?: number | null;
+  project_name?: string | null;
+  size_2_5: number;
+  size_3: number;
+  size_3_5: number;
+  size_4: number;
+  description?: string;
+  uploaded_by: string;
+  created_at: string;
+}
+
+export interface ChaserStockBalance {
+  size_2_5: number;
+  size_3: number;
+  size_3_5: number;
+  size_4: number;
+}
+
 export interface ExpItem { description: string; amount: number; date?: string; }
 
 export interface ExpenseResp {
@@ -509,6 +551,8 @@ export const api = {
       apiRequest(`/dpr/${projectId}`, { method: 'POST', body: JSON.stringify(data) }),
     update: (entryId: number, data: Omit<DPREntry, 'id' | 'project_id' | 'uploaded_by' | 'created_at'>): Promise<DPREntry> =>
       apiRequest(`/dpr/${entryId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove: (entryId: number): Promise<{ message: string }> =>
+      apiRequest(`/dpr/${entryId}`, { method: 'DELETE' }),
     factoryList: (page = 1, pageSize = 200): Promise<PaginatedResponse<FactoryDPREntry>> =>
       apiRequest(`/dpr/factory?page=${page}&page_size=${pageSize}`),
     factoryMonthly: (month: number, year: number): Promise<PaginatedResponse<FactoryDPREntry>> =>
@@ -517,6 +561,40 @@ export const api = {
       apiRequest('/dpr/factory', { method: 'POST', body: JSON.stringify(data) }),
     factoryUpdate: (entryId: number, data: Omit<FactoryDPREntry, 'id' | 'uploaded_by' | 'created_at'>): Promise<FactoryDPREntry> =>
       apiRequest(`/dpr/factory/${entryId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    factoryRemove: (entryId: number): Promise<{ message: string }> =>
+      apiRequest(`/dpr/factory/${entryId}`, { method: 'DELETE' }),
+  },
+  procurement: {
+    vendors: (): Promise<Vendor[]> => apiRequest('/factory/vendors'),
+    createVendor: (name: string): Promise<Vendor> =>
+      apiRequest('/factory/vendors', { method: 'POST', body: JSON.stringify({ name }) }),
+    updateVendor: (id: number, name: string): Promise<Vendor> =>
+      apiRequest(`/factory/vendors/${id}`, { method: 'PUT', body: JSON.stringify({ name }) }),
+    deleteVendor: (id: number): Promise<{ message: string }> =>
+      apiRequest(`/factory/vendors/${id}`, { method: 'DELETE' }),
+    list: (page = 1, pageSize = 20): Promise<PaginatedResponse<ProcurementEntry>> =>
+      apiRequest(`/factory/procurement?page=${page}&page_size=${pageSize}`),
+    monthly: (month: number, year: number): Promise<PaginatedResponse<ProcurementEntry>> =>
+      apiRequest(`/factory/procurement?month=${month}&year=${year}&page_size=200`),
+    create: (data: Omit<ProcurementEntry, 'id' | 'vendor_name' | 'uploaded_by' | 'created_at'>): Promise<ProcurementEntry> =>
+      apiRequest('/factory/procurement', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Omit<ProcurementEntry, 'id' | 'vendor_name' | 'uploaded_by' | 'created_at'>): Promise<ProcurementEntry> =>
+      apiRequest(`/factory/procurement/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove: (id: number): Promise<{ message: string }> =>
+      apiRequest(`/factory/procurement/${id}`, { method: 'DELETE' }),
+  },
+  chasers: {
+    list: (page = 1, pageSize = 20): Promise<PaginatedResponse<ChaserEntry>> =>
+      apiRequest(`/chasers?page=${page}&page_size=${pageSize}`),
+    monthly: (month: number, year: number): Promise<PaginatedResponse<ChaserEntry>> =>
+      apiRequest(`/chasers?month=${month}&year=${year}&page_size=200`),
+    stock: (): Promise<ChaserStockBalance> => apiRequest('/chasers/stock'),
+    create: (data: Omit<ChaserEntry, 'id' | 'project_name' | 'uploaded_by' | 'created_at'>): Promise<ChaserEntry> =>
+      apiRequest('/chasers', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Omit<ChaserEntry, 'id' | 'project_name' | 'uploaded_by' | 'created_at'>): Promise<ChaserEntry> =>
+      apiRequest(`/chasers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove: (id: number): Promise<{ message: string }> =>
+      apiRequest(`/chasers/${id}`, { method: 'DELETE' }),
   },
   expenses: {
     list: (page = 1, pageSize = 20, status?: string): Promise<PaginatedResponse<ExpenseResp>> =>

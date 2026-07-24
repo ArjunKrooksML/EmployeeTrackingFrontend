@@ -357,7 +357,7 @@ export default function OrdersView() {
                 return (
                   <tr key={p.project_id} onClick={() => setActiveId(p.project_id)}
                     className="hover:bg-slate-50/80 transition cursor-pointer">
-                    <td className="px-4 py-3.5 font-medium text-slate-800">{p.name}</td>
+                    <td className="px-4 py-3.5 font-medium text-slate-800">{p.name} <span className="text-slate-400 font-normal">({p.client_name})</span></td>
                     <td className="px-4 py-3.5 text-center">
                       <span className={`inline-flex items-center justify-center h-6 min-w-[1.5rem] px-1.5 rounded-full text-xs font-bold ${pc > 0 ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>{pc}</span>
                     </td>

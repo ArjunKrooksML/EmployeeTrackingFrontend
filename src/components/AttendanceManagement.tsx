@@ -6,8 +6,8 @@ import Pagination from './Pagination';
 import { generateAttendancePivot } from '../utils/attendanceExcel';
 import { MONTHS, currentYear, YEARS, attBadge } from '../utils/helpers';
 
-type AttRow = Attendance & { employee_name?: string };
-type EmpSummary = { id: number; name: string; total: number; pending: number; present: number; absent: number; late: number };
+type AttRow = Attendance & { employee_name?: string; profile_pic_url?: string | null };
+type EmpSummary = { id: number; name: string; pic?: string | null; total: number; pending: number; present: number; absent: number; late: number };
 
 export default function AttendanceManagement() {
   const toast = useToast();
@@ -41,7 +41,7 @@ export default function AttendanceManagement() {
     const map = new Map<number, EmpSummary>();
     for (const r of allRecords) {
       if (!map.has(r.employee_id))
-        map.set(r.employee_id, { id: r.employee_id, name: r.employee_name || `#${r.employee_id}`, total: 0, pending: 0, present: 0, absent: 0, late: 0 });
+        map.set(r.employee_id, { id: r.employee_id, name: r.employee_name || `#${r.employee_id}`, pic: r.profile_pic_url, total: 0, pending: 0, present: 0, absent: 0, late: 0 });
       const e = map.get(r.employee_id)!;
       e.total++;
       (e as any)[r.attendance]++;
@@ -129,8 +129,8 @@ export default function AttendanceManagement() {
                       <tr key={emp.id} onClick={() => selectEmp(emp.id)} className="hover:bg-gray-50 cursor-pointer">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-semibold shrink-0">
-                              {emp.name.charAt(0).toUpperCase()}
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
+                              {emp.pic ? <img src={emp.pic} alt="" className="h-8 w-8 object-cover" /> : emp.name.charAt(0).toUpperCase()}
                             </div>
                             <span className="text-sm font-medium text-gray-900">{emp.name}</span>
                           </div>
@@ -157,8 +157,8 @@ export default function AttendanceManagement() {
               <div className="md:hidden space-y-3">
                 {empList.map(emp => (
                   <button key={emp.id} onClick={() => selectEmp(emp.id)} className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-left flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-sm font-semibold shrink-0">
-                      {emp.name.charAt(0).toUpperCase()}
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden">
+                      {emp.pic ? <img src={emp.pic} alt="" className="h-10 w-10 object-cover" /> : emp.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{emp.name}</p>

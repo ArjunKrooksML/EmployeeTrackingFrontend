@@ -143,8 +143,8 @@ export default function LeaveManagement() {
                   <tr key={leave.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
-                          {leave.employee_name.charAt(0).toUpperCase()}
+                        <div className="h-10 w-10 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden">
+                          {leave.profile_pic_url ? <img src={leave.profile_pic_url} alt="" className="h-10 w-10 object-cover" /> : leave.employee_name.charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-bold text-gray-900">{leave.employee_name}</div>
@@ -222,8 +222,8 @@ export default function LeaveManagement() {
               <div key={leave.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
-                      {leave.employee_name.charAt(0).toUpperCase()}
+                    <div className="h-9 w-9 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm overflow-hidden">
+                      {leave.profile_pic_url ? <img src={leave.profile_pic_url} alt="" className="h-9 w-9 object-cover" /> : leave.employee_name.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">{leave.employee_name}</p>

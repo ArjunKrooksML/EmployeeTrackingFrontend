@@ -226,6 +226,7 @@ export interface Leave {
   id: number;
   employee_id: number;
   employee_name: string;
+  profile_pic_url?: string | null;
   leave_type: 'casual' | 'sick' | 'emergency';
   leave_date: string;
   day_type: 'full' | 'first_half' | 'second_half';
